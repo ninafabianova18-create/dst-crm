@@ -35,17 +35,26 @@ app.post('/api/send-mail', async (req, res) => {
     return res.status(400).json({ error: 'No recipients (bcc) provided' });
   }
 
-  const bccList = Array.isArray(bcc) ? bcc.join(',') : String(bcc);
+  const recipients = Array.isArray(bcc) ? bcc : [String(bcc)];
+  const validRecipients = recipients.filter(email => email && email.trim());
+
+  if (validRecipients.length === 0) {
+    return res.status(400).json({ error: 'No valid email addresses provided' });
+  }
 
   try {
-    const info = await transporter.sendMail({
-      from: FROM_EMAIL,
-      to: FROM_EMAIL,
-      bcc: bccList,
-      subject: subject || '(no subject)',
-      text: text || '',
-    });
-    res.json({ ok: true, info });
+    // Odoslať jednotlivý email každému príjemcovi (bez toho aby videli ostatných)
+    const results = [];
+    for (const recipient of validRecipients) {
+      const info = await transporter.sendMail({
+        from: FROM_EMAIL,
+        to: recipient,
+        subject: subject || '(no subject)',
+        text: text || '',
+      });
+      results.push({ recipient, status: 'sent', info });
+    }
+    res.json({ ok: true, count: results.length, results });
   } catch (err) {
     console.error('Send mail error:', err);
     res.status(500).json({ error: String(err) });

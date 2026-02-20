@@ -51,6 +51,13 @@ export const Communication: React.FC = () => {
     "all" | "paid" | "partial" | "unpaid" | "overpaid"
   >("all");
 
+  // Email modal
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailText, setEmailText] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
 
@@ -208,6 +215,85 @@ export const Communication: React.FC = () => {
     }
   };
 
+  // Email sending
+  const toggleStudentSelection = (studentId: string) => {
+    const newSelected = new Set(selectedStudents);
+    if (newSelected.has(studentId)) {
+      newSelected.delete(studentId);
+    } else {
+      newSelected.add(studentId);
+    }
+    setSelectedStudents(newSelected);
+  };
+
+  const toggleAllStudents = () => {
+    if (selectedStudents.size === filteredStudents.length) {
+      setSelectedStudents(new Set());
+    } else {
+      setSelectedStudents(new Set(filteredStudents.map(s => s.id)));
+    }
+  };
+
+  const sendEmailToSelected = async () => {
+    if (selectedStudents.size === 0) {
+      setMessage("Vyberte aspoň jedného študenta");
+      setMessageType("error");
+      return;
+    }
+
+    if (!emailSubject.trim() || !emailText.trim()) {
+      setMessage("Vyplňte predmet a správu");
+      setMessageType("error");
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const emails = filteredStudents
+        .filter(s => selectedStudents.has(s.id))
+        .map(s => s.mail)
+        .filter(m => m && m.trim());
+
+      if (emails.length === 0) {
+        setMessage("Vybratí študenti nemajú emailovú adresu");
+        setMessageType("error");
+        setSendingEmail(false);
+        return;
+      }
+
+      const response = await fetch("/api/send-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bcc: emails,
+          subject: emailSubject,
+          text: emailText,
+        }),
+      });
+
+      if (response.ok) {
+        await response.json();
+        setMessage(`Email úspešně odeslaný ${emails.length} študentom`);
+        setMessageType("success");
+        setShowEmailModal(false);
+        setSelectedStudents(new Set());
+        setEmailSubject("");
+        setEmailText("");
+      } else {
+        const errorData = await response.json();
+        console.error("Backend error:", errorData);
+        setMessage(`Chyba pri odoslaní: ${errorData.error || "Neznáma chyba"}`);
+        setMessageType("error");
+      }
+    } catch (err: any) {
+      console.error("Mail send error:", err);
+      setMessage(`Chyba pri odoslaní emailu: ${err?.message || "Neznáma chyba"}`);
+      setMessageType("error");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (loading) {
     return <div className="installments-check-container">Načítavam dáta...</div>;
   }
@@ -252,12 +338,28 @@ export const Communication: React.FC = () => {
         <button style={{ marginLeft: 12 }} onClick={loadAll}>
           Obnoviť dáta
         </button>
+
+        <button 
+          style={{ marginLeft: 12, backgroundColor: "#0066cc", color: "white", padding: "6px 12px", border: "none", borderRadius: 6, cursor: "pointer" }}
+          onClick={() => setShowEmailModal(true)}
+          disabled={filteredStudents.length === 0}
+        >
+          Odoslať email ({selectedStudents.size} vybrato)
+        </button>
       </div>
 
       <div className="table-wrapper">
         <table className="installments-table">
           <thead>
             <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
+                  onChange={toggleAllStudents}
+                  title="Vybrať všetkých"
+                />
+              </th>
               <th>Študent</th>
               <th>VS</th>
               <th>Period</th>
@@ -276,6 +378,13 @@ export const Communication: React.FC = () => {
               const status = statusForStudent(s);
               return (
                 <tr key={s.id} className={`row-${status}`}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.has(s.id)}
+                      onChange={() => toggleStudentSelection(s.id)}
+                    />
+                  </td>
                   <td>
                     <div className="student-name">{(s.name ?? "") + " " + (s.surname ?? "")}</div>
                     <div className="student-mail">{s.mail}</div>
@@ -324,9 +433,80 @@ export const Communication: React.FC = () => {
         </table>
       </div>
 
-      
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            padding: "20px",
+            borderRadius: "8px",
+            maxWidth: "500px",
+            width: "90%",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          }}>
+            <h3>Odoslať email</h3>
+            <p>Vybratí študenti: <strong>{selectedStudents.size}</strong></p>
 
-    <style >{`
+            <div style={{ marginBottom: "12px" }}>
+              <label>Predmet:</label>
+              <input
+                type="text"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Napr. Upozornenie na platbu"
+                style={{ width: "100%", padding: "8px", marginTop: "4px", marginBottom: "12px", border: "1px solid #ccc", borderRadius: "4px" }}
+              />
+            </div>
+
+            <div style={{ marginBottom: "12px" }}>
+              <label>Správa:</label>
+              <textarea
+                value={emailText}
+                onChange={(e) => setEmailText(e.target.value)}
+                placeholder="Napíšte správu..."
+                rows={6}
+                style={{ width: "100%", padding: "8px", marginTop: "4px", marginBottom: "12px", border: "1px solid #ccc", borderRadius: "4px", fontFamily: "Arial" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                style={{ padding: "8px 16px", border: "1px solid #ccc", borderRadius: "4px", cursor: "pointer", backgroundColor: "#f5f5f5" }}
+              >
+                Zrušiť
+              </button>
+              <button
+                onClick={sendEmailToSelected}
+                disabled={sendingEmail}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: sendingEmail ? "#999" : "#0066cc",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: sendingEmail ? "not-allowed" : "pointer",
+                }}
+              >
+                {sendingEmail ? "Odosielam..." : "Odoslať email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style >{`
         .controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
         .installments-table { width:100%; border-collapse:collapse; }
         .installments-table th, .installments-table td { padding:8px; border:1px solid #e6e6e6; text-align:left; vertical-align:middle; }
