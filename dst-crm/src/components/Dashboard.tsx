@@ -12,11 +12,12 @@ import { UserProfile } from './UserProfile';
 import PaymentsManagement from './PaymentsManagement';
 import StudentsManagement from './StudentsManagement';
 import Communication from './Communacation';
+import { Statistics } from './Statistics';
 
 
 
 export const Dashboard = () => {
-  const [adminTab, setAdminTab] = useState<'import' | 'communication' | 'students'| 'emails' | 'payments' | 'pending' | 'users'>('import');
+  const [adminTab, setAdminTab] = useState<'import' | 'communication' | 'students'| 'emails' | 'payments' | 'pending' | 'users' | 'statistics'>('import');
   const { user, role, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -108,6 +109,13 @@ export const Dashboard = () => {
               >
                 Správa študentov
               </button>
+
+              <button
+                className={`tab-btn ${adminTab === 'statistics' ? 'active' : ''}`}
+                onClick={() => setAdminTab('statistics')}
+              >
+                Štatistiky
+              </button>
             </div>
             {/*{adminTab === 'pending' && <PendingRegistrations />} */}
             {adminTab === 'import' && <ImportStudents />}
@@ -116,6 +124,7 @@ export const Dashboard = () => {
             {adminTab === 'payments' && <PaymentsManagement />}
             {adminTab === 'students' && <StudentsManagement />}
             {adminTab === 'communication' && <Communication />}
+            {adminTab === 'statistics' && <Statistics />}
           </div>
         ) : (
           <UserProfile />
