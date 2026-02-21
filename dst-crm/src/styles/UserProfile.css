@@ -2,7 +2,7 @@
 .profile-grid {
   display: grid;
   grid-template-columns:260px 1.4fr 1fr;
-  gap: 30px;
+  gap: 34px;
   align-items: stretch; /* makes photo same height as the cards */
 }
 
@@ -16,10 +16,48 @@
 /* all "cards" */
 .profile-card,
 .profile-photo-card, .profile-card-secondary, .profile-card-tetriary {
-  background: #e7e7e7;
+  background: #ffffff;
   border-radius: 12px;
   padding: 28px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+  border: 2px solid #d0d0d0;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+}
+
+.profile-card-payments {
+  grid-column: 1 / -1;
+}
+
+.payments-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f7f7f7;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.payments-table th,
+.payments-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #dadada;
+  text-align: left;
+  color: #4b4a4a;
+  font-size: 14px;
+}
+
+.payments-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #ececec;
+}
+
+.payments-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* photo card fills height like others */
@@ -128,35 +166,39 @@
 
 
 
-/* RESPONSIVE: smaller screens */
-@media (max-width: 1000px) {
-  /* photo stays left, cards stack */
+/* RESPONSIVE: avatar+progress stays on the left, cards stack on the right */
+@media (max-width: 1200px) {
   .profile-grid {
-    grid-template-columns: 160px 1fr;
-    grid-template-areas:
-      "photo editable"
-      "photo payment";
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 24px;
+    align-items: stretch;
   }
 
-  .profile-photo-card { grid-area: photo; }
-  .profile-card:not(.profile-card-secondary) { grid-area: editable; }
-  .profile-card-secondary { grid-area: payment; }
-
-  /* photo smaller */
-  .profile-avatar {
-    width: 120px;
-    height: 120px;
+  .profile-photo-card {
+    grid-column: 1;
+    grid-row: 1;
+    height: 100%;
   }
-}
 
-@media (max-width: 700px) {
-  /* phone: everything stacks */
-  .profile-grid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "photo"
-      "editable"
-      "payment";
+  .profile-card:not(.profile-card-secondary):not(.profile-card-payments) {
+    grid-column: 2;
+    grid-row: 1;
+    height: 100%;
+  }
+
+  .profile-card-secondary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .profile-card-payments {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .profile-card-secondary,
+  .profile-card-payments {
+    margin-top: 12px;
   }
 
   .profile-view,
@@ -164,9 +206,22 @@
     grid-template-columns: 1fr;
   }
 
+
+}
+
+@media (max-width: 00px) {
+  .profile-grid {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .profile-photo-card {
+    padding: 16px;
+  }
+
   .profile-avatar {
-    width: 110px;
-    height: 110px;
+    width: 95px;
+    height: 95px;
   }
 }
 
@@ -216,10 +271,6 @@
   font-family: inherit;
 
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.mail-editing{
-  
 }
 
 .form-group textarea {

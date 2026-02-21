@@ -29,8 +29,8 @@ interface StudentData {
 }
 interface PaymentInfo {
   vs: string;
-  amount: string;
-  date: Date;
+  amount: string | number;
+  date: Date | null;
   message?: string;
   senderIban: string;
   senderName?: string;
@@ -49,6 +49,17 @@ export const UserProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [studentDocId, setStudentDocId] = useState<string>("");
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
+
+  const toDateSafe = (value: any): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    if (typeof value?.toDate === "function") {
+      const dateFromTs = value.toDate();
+      return dateFromTs instanceof Date && !isNaN(dateFromTs.getTime()) ? dateFromTs : null;
+    }
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
 
   useEffect(() => {
     const fetchStudentAndPayments = async () => {
@@ -100,9 +111,8 @@ export const UserProfile = () => {
           const p = d.data() as any;
           return {
             vs: p.vs,
-            amount: p.amount,
-            // ak je date Firestore Timestamp:
-            date: p.date?.toDate ? p.date.toDate() : p.date,
+            amount: p.amount ?? 0,
+            date: toDateSafe(p.date),
             message: p.message ?? "",
             senderIban: p.senderIban ?? "",
             senderName: p.senderName ?? "",
@@ -164,7 +174,10 @@ export const UserProfile = () => {
     Number(String(studentData?.amount || "0").replace(",", ".")) || 0;
 
   // paid so far = on progres bar
-  const paidSoFar = 0; // <- replace later with sum of payments
+  const paidSoFar = payments.reduce((sum, payment) => {
+    const amount = Number(String(payment.amount ?? "0").replace(",", "."));
+    return sum + (Number.isNaN(amount) ? 0 : amount);
+  }, 0);
   const progressPercent =
     totalAmount > 0
       ? Math.min(100, Math.max(0, (paidSoFar / totalAmount) * 100))
@@ -404,7 +417,7 @@ export const UserProfile = () => {
           <div className="payment-progress">
             <div className="progress-title">Platby</div>
 
-            <div className="progress-info">{payments[0].amount} platených</div>
+            <div className="progress-info">{paidSoFar.toFixed(0)} € platených</div>
 
             <div className="progress-wrap">
               <div className="progress-bar">
@@ -623,6 +636,43 @@ export const UserProfile = () => {
               </span>
             </div>
           </div>
+        </section>
+
+        <section className="profile-card profile-card-payments">
+          <div className="card-head">
+            <h3 className="card-title">Platby</h3>
+          </div>
+
+          {payments.length === 0 ? (
+            <div className="profile-field">
+              <span className="field-value">No payments found for VS: {studentData?.vs || "-"}</span>
+            </div>
+          ) : (
+            <div className="payments-table-wrap">
+              <table className="payments-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>VS</th>
+                    <th>Sender</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment, index) => (
+                    <tr key={`${payment.vs}-${payment.date?.toString() || index}`}>
+                      <td>{payment.date instanceof Date ? payment.date.toLocaleDateString("sk-SK") : "-"}</td>
+                      <td>{payment.amount ?? "-"}</td>
+                      <td>{payment.vs ?? "-"}</td>
+                      <td>{payment.senderName || payment.senderIban || "-"}</td>
+                      <td>{payment.message || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
     </div>
