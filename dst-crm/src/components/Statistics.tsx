@@ -6,6 +6,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import "../styles/Statistics.css";
 
 interface StudentData {
   id: string;
@@ -156,7 +157,7 @@ export const Statistics: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-8 text-gray-600">Načítavam štatistiky...</div>;
+    return <div className="statistics-container">Načítavam štatistiky...</div>;
   }
 
   const overallStats = calculateFinanceStats();
@@ -164,26 +165,29 @@ export const Statistics: React.FC = () => {
   const totalPayments = payments.length;
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4">
-      <h2 className="text-3xl font-bold mb-6 text-gray-900">Štatistiky</h2>
+    <div className="statistics-container">
+      <div className="statistics-header">
+        <h2>Štatistiky</h2>
+        <p>Prehľad platieb a finančných štatistík</p>
+      </div>
 
       {/* Tapy */}
-      <div className="flex gap-2 mb-6 border-b-2 border-gray-200">
+      <div className="stats-tabs">
         <button
-          className={`py-3 px-4 font-medium transition-all border-b-4 mb-[-2px] ${
+          className={`statistics-tab-btn ${
             tab === 'overview'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-blue-600'
+              ? 'active'
+              : ''
           }`}
           onClick={() => setTab('overview')}
         >
           Prehľad
         </button>
         <button
-          className={`py-3 px-4 font-medium transition-all border-b-4 mb-[-2px] ${
+          className={`statistics-tab-btn ${
             tab === 'finance'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-blue-600'
+              ? 'active'
+              : ''
           }`}
           onClick={() => setTab('finance')}
         >
@@ -193,23 +197,35 @@ export const Statistics: React.FC = () => {
 
       {/* TAB: PREHĽAD */}
       {tab === 'overview' && (
-        <div className="animate-fadeIn">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-lg p-6 shadow-md hover:shadow-lg hover:translate-y-[-2px] transition-all">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Počet študentov</h3>
-              <p className="text-3xl font-bold text-blue-600">{totalStudents}</p>
+        <div className="statistics-tab-content">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="statistics-card-header">
+                <h3>Počet študentov</h3>
+                <p>Aktuálne evidovaní študenti</p>
+              </div>
+              <p className="stat-value">{totalStudents}</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 shadow-md hover:shadow-lg hover:translate-y-[-2px] transition-all">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Počet platieb</h3>
-              <p className="text-3xl font-bold text-blue-600">{totalPayments}</p>
+            <div className="stat-card">
+              <div className="statistics-card-header">
+                <h3>Počet platieb</h3>
+                <p>Všetky zaznamenané platby</p>
+              </div>
+              <p className="stat-value">{totalPayments}</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 shadow-md hover:shadow-lg hover:translate-y-[-2px] transition-all">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Celková suma platieb</h3>
-              <p className="text-3xl font-bold text-blue-600">{overallStats.paid.toFixed(2)} €</p>
+            <div className="stat-card">
+              <div className="statistics-card-header">
+                <h3>Celková suma platieb</h3>
+                <p>Súčet prijatých platieb</p>
+              </div>
+              <p className="stat-value">{overallStats.paid.toFixed(2)} €</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 shadow-md hover:shadow-lg hover:translate-y-[-2px] transition-all">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Priemerná platba</h3>
-              <p className="text-3xl font-bold text-blue-600">
+            <div className="stat-card">
+              <div className="statistics-card-header">
+                <h3>Priemerná platba</h3>
+                <p>Priemer na jednu platbu</p>
+              </div>
+              <p className="stat-value">
                 {totalPayments > 0 ? (overallStats.paid / totalPayments).toFixed(2) : 0} €
               </p>
             </div>
@@ -219,30 +235,31 @@ export const Statistics: React.FC = () => {
 
       {/* TAB: FINANCE */}
       {tab === 'finance' && (
-        <div className="animate-fadeIn">
+        <div className="statistics-tab-content">
           {/* Tabuľka so všetkými štatistikami */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold mb-4 text-gray-900">Finančný prehľad - Celkom</h3>
-            <div className="overflow-x-auto bg-white rounded-lg shadow">
-              <table className="w-full">
-                <thead className="bg-gray-100">
+          <div className="finance-table-section">
+            <div className="statistics-card-header">
+              <h3>Finančný prehľad - Celkom</h3>
+              <p>Platené vs. očakávané hodnoty</p>
+            </div>
+            <div className="finance-table-wrapper">
+              <table className="finance-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Platené (Paid)</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Očakávané (Expected)</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Rozdiel (Paid - Expected)</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Celkovo očakávané (Final)</th>
+                    <th>Platené (Paid)</th>
+                    <th>Očakávané (Expected)</th>
+                    <th>Rozdiel (Paid - Expected)</th>
+                    <th>Celkovo očakávané (Final)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t border-gray-200 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-800">{overallStats.paid.toFixed(2)} €</td>
-                    <td className="px-4 py-3 text-gray-800">{overallStats.expected.toFixed(2)} €</td>
-                    <td className={`px-4 py-3 font-semibold ${
-                      overallStats.difference >= 0 ? 'text-green-700' : 'text-red-700'
-                    }`}>
+                  <tr>
+                    <td>{overallStats.paid.toFixed(2)} €</td>
+                    <td>{overallStats.expected.toFixed(2)} €</td>
+                    <td className={overallStats.difference >= 0 ? 'positive-diff' : 'negative-diff'}>
                       {overallStats.difference.toFixed(2)} €
                     </td>
-                    <td className="px-4 py-3 text-gray-800">{overallStats.final.toFixed(2)} €</td>
+                    <td>{overallStats.final.toFixed(2)} €</td>
                   </tr>
                 </tbody>
               </table>
@@ -250,9 +267,12 @@ export const Statistics: React.FC = () => {
           </div>
 
           {/* Karty podľa krajov (regiónov) */}
-          <div>
-            <h3 className="text-xl font-bold mb-4 text-gray-900">Finančný prehľad podľa krajov</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="regions-section">
+            <div className="statistics-card-header">
+              <h3>Finančný prehľad podľa krajov</h3>
+              <p>Rozdelenie podľa škôl a regiónov</p>
+            </div>
+            <div className="regions-grid">
               {regions.map((region) => {
                 const regionStudents = students
                   .filter(s => s.school === region)
@@ -260,28 +280,31 @@ export const Statistics: React.FC = () => {
                 const regionStats = calculateFinanceStats(regionStudents);
 
                 return (
-                  <div key={region} className="bg-white rounded-lg shadow-md hover:shadow-lg hover:translate-y-[-2px] transition-all border-l-4 border-blue-600 p-4">
-                    <h4 className="text-lg font-bold text-blue-600 mb-4">{region}</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 font-medium">Platené:</span>
-                        <span className="text-gray-900 font-semibold">{regionStats.paid.toFixed(2)} €</span>
+                  <div key={region} className="region-card">
+                    <div className="statistics-card-header">
+                      <h4>{region}</h4>
+                      <p>Regionálny finančný prehľad</p>
+                    </div>
+                    <div className="region-stats">
+                      <div className="region-stat-row">
+                        <span className="stat-label">Platené:</span>
+                        <span className="stat-number">{regionStats.paid.toFixed(2)} €</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 font-medium">Očakávané:</span>
-                        <span className="text-gray-900 font-semibold">{regionStats.expected.toFixed(2)} €</span>
+                      <div className="region-stat-row">
+                        <span className="stat-label">Očakávané:</span>
+                        <span className="stat-number">{regionStats.expected.toFixed(2)} €</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 font-medium">Rozdiel:</span>
-                        <span className={`font-semibold ${
-                          regionStats.difference >= 0 ? 'text-green-700' : 'text-red-700'
+                      <div className="region-stat-row">
+                        <span className="stat-label">Rozdiel:</span>
+                        <span className={`stat-number ${
+                          regionStats.difference >= 0 ? 'positive-diff' : 'negative-diff'
                         }`}>
                           {regionStats.difference.toFixed(2)} €
                         </span>
                       </div>
-                      <div className="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
-                        <span className="text-gray-600 font-medium">Celkovo:</span>
-                        <span className="text-gray-900 font-semibold">{regionStats.final.toFixed(2)} €</span>
+                      <div className="region-stat-row">
+                        <span className="stat-label">Celkovo:</span>
+                        <span className="stat-number">{regionStats.final.toFixed(2)} €</span>
                       </div>
                     </div>
                   </div>
@@ -290,10 +313,10 @@ export const Statistics: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-center mt-8">
+          <div className="refresh-section">
             <button 
               onClick={loadStats}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all shadow-md hover:shadow-lg"
+              className="refresh-btn"
             >
               Obnoviť štatistiky
             </button>

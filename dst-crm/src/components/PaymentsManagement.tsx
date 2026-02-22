@@ -323,7 +323,6 @@ export const PaymentsManagement: React.FC = () => {
                         <td>{p.matchedStudentId ?? "-"}</td>
                         <td>
                           <button
-                            style={{ color: "#007bff" }}
                             onClick={() => {
                               setSelectedPaymentId(p.id ?? null);
                               setSearchVS(p.vs ?? "");
@@ -335,7 +334,6 @@ export const PaymentsManagement: React.FC = () => {
 
                           {p.matchStatus === "matched" && p.matchedStudentId && (
                             <button
-                              style={{ color: "#007bff" }}
                               onClick={() => removeAssignment(p.id!)}
                             >
                               Vyčistiť
@@ -370,14 +368,8 @@ export const PaymentsManagement: React.FC = () => {
                                 />
                                 <button
                                   onClick={() => setSelectedPaymentId(null)}
-                                  style={{
-                                    marginLeft: "auto",
-                                    background: "#ff6b6b",
-                                    color: "white",
-                                    border: "none",
-                                  }}
                                 >
-                                  Zbruš
+                                  Zatvoriť
                                 </button>
                               </div>
 

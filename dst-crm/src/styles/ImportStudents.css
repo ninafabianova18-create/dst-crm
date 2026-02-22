@@ -53,7 +53,7 @@
   display: inline-block;
   padding: 10px 20px;
   background-color: #ffa5eb;
-  color: #4b4a4a;
+  color: #5c5c5c;
   font-size: 15px;
   border-radius: 6px;
   cursor: pointer;
@@ -65,7 +65,7 @@
 }
 
 .file-input-label:hover {
-  background-color: #ffa5eb;
+  background-color: #979696;
 }
 
 .file-input {

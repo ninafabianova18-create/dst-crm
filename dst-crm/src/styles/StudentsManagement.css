@@ -1,31 +1,37 @@
 .students-management-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  padding-bottom: 120px;
 }
 
 .students-management-header {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 15px;
 }
 
 .students-management-header h2 {
-  margin: 0 0 6px 0;
-  font-size: 24px;
+  margin: 0 0 10px 0;
+  font-size: 28px;
   font-weight: 700;
+  color: whitesmoke;
 }
 
 .students-management-header p {
+  color: whitesmoke;
+  font-size: 13px;
   margin: 0;
-  opacity: 0.8;
-  line-height: 1.4;
+  font-weight: 500;
 }
 
 .students-card {
-  background: gray;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  background: whitesmoke;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .students-toolbar {
@@ -34,7 +40,8 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
+  padding: 15px 0;
 }
 
 .students-search {
@@ -42,17 +49,23 @@
   flex: 1;
   max-width: 520px;
   padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 6px;
+  border: 1px solid #d3d5d5;
   outline: none;
+  background: #fff;
+  font-size: 14px;
+  color: #4b4a4a;
 }
 
 .students-search:focus {
-  border-color: rgba(0, 0, 0, 0.28);
+  border-color: #999;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
 }
 
 .students-count {
-  opacity: 0.85;
+  color: #4b4a4a;
+  font-weight: 600;
+  font-size: 13px;
 }
 
 .students-table-wrapper {
@@ -62,52 +75,73 @@
 .students-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 980px;
+}
+
+.students-table thead {
+  background-color: #eaebec;
 }
 
 .students-table thead th {
   text-align: left;
   font-size: 13px;
-  letter-spacing: 0.02em;
-  padding: 12px 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  opacity: 0.85;
-  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 15px;
+  border-bottom: 2px solid #d3d5d5;
+  font-weight: 700;
+  color: #4b4a4a;
 }
 
 .students-table tbody td {
-  padding: 12px 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 15px;
+  border-bottom: 1px solid #d3d5d5;
   vertical-align: top;
+  color: #4b4a4a;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .students-table tbody tr:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: #f9f9f9;
 }
 
 .name-cell .name-strong {
   font-weight: 800;
+  color: #4b4a4a;
 }
 
 .name-cell .name-sub {
   font-size: 12px;
-  opacity: 0.75;
+  color: #999;
   margin-top: 2px;
 }
 
 .vs-cell {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+  color: #4b4a4a;
+  font-size: 13px;
 }
 
 .btn {
   cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fff;
-  padding: 7px 10px;
-  border-radius: 10px;
-  font-weight: 700;
+  border: 1px solid #d3d5d5;
+  background: #ffffff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
   font-size: 13px;
+  color: #4b4a4a;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.btn:active {
+  transform: translateY(1px);
 }
 
 .btn:disabled {
@@ -115,33 +149,57 @@
   cursor: not-allowed;
 }
 
+.btn-small {
+  margin-left: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #d3d5d5;
+  background: #ffffff;
+  color: #4b4a4a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-small:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
 .payments-pill {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d3d5d5;
+  font-weight: 700;
   font-size: 12px;
-  background: rgba(0, 0, 0, 0.03);
+  background: #fff;
+  color: #4b4a4a;
+}
+
+.payments-pill:hover {
+  background: #f5f5f5;
+  border-color: #999;
 }
 
 /* Expand row */
 .payments-row td {
-  padding-top: 18px;
-  padding-bottom: 18px;
+  padding-top: 15px;
+  padding-bottom: 15px;
 }
 
 .payments-inner {
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  background: linear-gradient(to bottom, #ffffff, #f1f5f9);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #d3d5d5;
+  background: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .payments-empty {
   padding: 10px;
-  opacity: 0.85;
+  color: #999;
+  font-size: 14px;
 }
 
 .payments-mini-table {
@@ -153,27 +211,31 @@
 .payments-mini-table thead th {
   text-align: left;
   font-size: 12px;
-  padding: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  opacity: 0.85;
+  font-weight: 700;
+  padding: 12px;
+  border-bottom: 1px solid #d3d5d5;
+  background-color: #eaebec;
+  color: #4b4a4a;
   white-space: nowrap;
 }
 
 .payments-mini-table tbody td {
-  padding: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 10px 12px;
+  border-bottom: 1px solid #d3d5d5;
+  color: #4b4a4a;
+  font-size: 13px;
 }
 
 .payments-mini-table tbody tr.matched-row {
-  background: rgba(34, 197, 94, 0.06);
+  background: rgba(212, 237, 218, 0.3);
 }
 
 .payments-mini-table tbody tr.unmatched-row {
-  background: rgba(239, 68, 68, 0.06);
+  background: rgba(248, 215, 218, 0.3);
 }
 
 .payments-mini-table tbody tr.ambiguous-row {
-  background: rgba(245, 158, 11, 0.08);
+  background: rgba(255, 243, 205, 0.3);
 }
 
 .message-cell {
@@ -181,50 +243,114 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #4b4a4a;
 }
 
-/* Status badges – rovnaké ako v PaymentsManagement */
 .status-badge {
   display: inline-block;
-  padding: 5px 10px;
-  border-radius: 999px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 12px;
-  font-weight: 800;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  white-space: nowrap;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .status-badge.matched {
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.35);
+  background-color: #d4edda;
+  color: #02c42f;
+  border: 1px solid #c3e6cb;
 }
 
 .status-badge.unmatched {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  background-color: #f8d7da;
+  color: #cd0217;
+  border: 1px solid #f5c6cb;
 }
 
 .status-badge.ambiguous {
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.35);
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
 }
 
 @media (max-width: 768px) {
   .students-management-container {
-    padding: 16px;
+    padding: 20px;
+  }
+
+  .students-management-header {
+    padding: 20px 20px 10px 20px;
+  }
+
+  .students-card {
+    padding: 20px;
+  }
+
+  .students-toolbar {
+    flex-direction: column;
+  }
+
+  .students-search {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .students-table {
+    font-size: 13px;
+  }
+
+  .students-table thead th,
+  .students-table tbody td {
+    padding: 12px 8px;
+  }
+
+  .btn {
+    padding: 7px 12px;
+    font-size: 12px;
   }
 
   .btn-small {
-    margin-left: 8px;
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    background: rgba(59, 130, 246, 0.08);
-    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 11px;
+    margin-left: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .students-management-container {
+    padding: 15px;
   }
 
-  .btn-small:hover {
-    background: rgba(59, 130, 246, 0.16);
+  .students-management-header {
+    padding: 15px 15px 8px 15px;
+  }
+
+  .students-management-header h2 {
+    font-size: 22px;
+  }
+
+  .students-card {
+    padding: 15px;
+  }
+
+  .students-search {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+
+  .students-count {
+    font-size: 12px;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .btn-small {
+    padding: 5px 8px;
+    font-size: 10px;
+    margin-left: 4px;
   }
 }

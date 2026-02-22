@@ -357,7 +357,7 @@ export const StudentsManagement: React.FC = () => {
                             disabled={!s.vs}
                             title={!s.vs ? "Študent nemá VS" : ""}
                           >
-                            {isPaymentsOpen ? "Skryť platby" : "Zobraziť platby"}
+                            {isPaymentsOpen ? "Skryť platby" : "Platby"}
                           </button>
                         </td>
                       </tr>
