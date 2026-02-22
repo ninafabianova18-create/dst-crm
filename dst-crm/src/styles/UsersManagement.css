@@ -96,8 +96,6 @@
 }
 */
 
-/* define in teh dashboard */
-/*
 .role-badge {
   display: inline-block;
   padding: 6px 12px;
@@ -108,15 +106,31 @@
 }
 
 .role-badge.admin {
-  background-color: #ffe6e6;
-  color: #c92a2a;
+  background-color: #ffa5eb;
+  color: #4b4a4a;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
 }
 
-.role-badge.user {
-  background-color: #e6f2ff;
-  color: #1971c2;
+.role-badge.student {
+  background-color: #f3f343;
+  color: #4b4a4a;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
 }
-*/
+
+.role-badge.team {
+  background-color: #fd5300;
+  color: white;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+}
 
 .role-select {
   padding: 8px 12px;

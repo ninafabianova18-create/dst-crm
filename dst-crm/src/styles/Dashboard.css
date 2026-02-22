@@ -50,15 +50,22 @@
   letter-spacing: 0.07em;
 }
 
-.role-badge.user {
+.role-badge.student {
   background-color: #f3f343;
   color: #4b4a4a;
   padding: px 10px;
   font-size: 13px;
   font-weight: 750;
   letter-spacing: 0.07em;
+}
 
-
+.role-badge.team {
+  background-color: #fd5300;
+  color: white;
+  padding: px 10px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
 }
 
 .user-avatar {

@@ -7,7 +7,7 @@ interface User {
   id: string;
   email: string;
   displayName: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'student' | 'team';
   createdAt: Date;
 }
 
@@ -30,7 +30,7 @@ export const UsersManagement = () => {
           id: doc.id,
           email: doc.data().email || '',
           displayName: doc.data().displayName || '',
-          role: doc.data().role || 'user',
+          role: doc.data().role || 'student',
           createdAt: doc.data().createdAt?.toDate(),
         });
       });
@@ -44,13 +44,14 @@ export const UsersManagement = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: 'admin' | 'user') => {
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'student' | 'team') => {
     try {
       await updateDoc(doc(db, 'users', userId), {
         role: newRole,
       });
 
-      setMessage(`Rola používateľa bola zmenená na ${newRole === 'admin' ? 'Administrátor' : 'Užívateľ'}`);
+      const roleLabel = newRole === 'admin' ? 'Administrátor' : newRole === 'team' ? 'Team' : 'Študent';
+      setMessage(`Rola používateľa bola zmenená na ${roleLabel}`);
       setMessageType('success');
       loadUsers();
     } catch (error) {
@@ -99,17 +100,18 @@ export const UsersManagement = () => {
                     <td>{user.displayName || '-'}</td>
                     <td>
                       <span className={`role-badge ${user.role}`}>
-                        {user.role === 'admin' ? 'Administrátor' : 'Užívateľ'}
+                        {user.role === 'admin' ? 'Administrátor' : user.role === 'team' ? 'Team' : 'Študent'}
                       </span>
                     </td>
                     <td>{user.createdAt?.toLocaleDateString('sk-SK')}</td>
                     <td>
                       <select
                         value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value as 'admin' | 'user')}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value as 'admin' | 'student' | 'team')}
                         className="role-select"
                       >
-                        <option value="user">Užívateľ</option>
+                        <option value="student">Študent</option>
+                        <option value="team">Team</option>
                         <option value="admin">Administrátor</option>
                       </select>
                     </td>

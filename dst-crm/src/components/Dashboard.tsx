@@ -18,7 +18,7 @@ import { Statistics } from './Statistics';
 
 export const Dashboard = () => {
   const [adminTab, setAdminTab] = useState<'import' | 'communication' | 'students'| 'emails' | 'payments' | 'pending' | 'users' | 'statistics'>('import');
-  const { user, role, isAdmin } = useAuth();
+  const { user, role, isAdmin, isTeam, isStudent } = useAuth();
   const navigate = useNavigate();
 
   //changing email and password
@@ -47,7 +47,9 @@ export const Dashboard = () => {
         <div className="header-content">
           <h1>Vitajte, {user?.displayName}</h1>
           <div className="user-info">
-            <span className={`role-badge ${role}`}>{role === 'admin' ? 'Administrátor' : 'Užívateľ'}</span>
+            <span className={`role-badge ${role}`}>
+              {role === 'admin' ? 'Administrátor' : role === 'team' ? 'Team' : 'Študent'}
+            </span>
             {user?.photoURL && (
               <img src={user.photoURL} alt={user.displayName || 'Profil'} className="user-avatar" />
             )}
@@ -90,26 +92,23 @@ export const Dashboard = () => {
                 Správa užívateľov
               </button>
               <button
+                className={`tab-btn ${adminTab === 'students' ? 'active' : ''}`}
+                onClick={() => setAdminTab('students')}
+              >
+                Správa študentov
+              </button>
+              <button
                 className={`tab-btn ${adminTab === 'payments' ? 'active' : ''}`}
                 onClick={() => setAdminTab('payments')}
               >
                 Správa platieb
               </button>
-
               <button
                 className={`tab-btn ${adminTab === 'communication' ? 'active' : ''}`}
                 onClick={() => setAdminTab('communication')}
               >
                 Komunikácia
               </button>
-
-              <button
-                className={`tab-btn ${adminTab === 'students' ? 'active' : ''}`}
-                onClick={() => setAdminTab('students')}
-              >
-                Správa študentov
-              </button>
-
               <button
                 className={`tab-btn ${adminTab === 'statistics' ? 'active' : ''}`}
                 onClick={() => setAdminTab('statistics')}
@@ -125,6 +124,10 @@ export const Dashboard = () => {
             {adminTab === 'students' && <StudentsManagement />}
             {adminTab === 'communication' && <Communication />}
             {adminTab === 'statistics' && <Statistics />}
+          </div>
+        ) : isTeam ? (
+          <div className="team-section">
+            <Statistics />
           </div>
         ) : (
           <UserProfile />

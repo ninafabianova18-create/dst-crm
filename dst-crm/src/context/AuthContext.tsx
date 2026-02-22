@@ -5,13 +5,15 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
-export type UserRole = 'admin' | 'user' | null;
+export type UserRole = 'admin' | 'student' | 'team' | null;
 
 interface AuthContextType {
   user: User | null;
   role: UserRole;
   loading: boolean;
   isAdmin: boolean;
+  isTeam: boolean;
+  isStudent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,13 +32,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
-            setRole(userDoc.data().role || 'user');
+            setRole(userDoc.data().role || 'student');
           } else {
-            setRole('user');
+            setRole('student');
           }
         } catch (error) {
           console.error('Chyba pri načítaní roly užívateľa:', error);
-          setRole('user');
+          setRole('student');
         }
       } else {
         setRole(null);
@@ -53,6 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     role,
     loading,
     isAdmin: role === 'admin',
+    isTeam: role === 'team',
+    isStudent: role === 'student',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
