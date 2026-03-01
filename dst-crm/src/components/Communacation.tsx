@@ -17,7 +17,7 @@ interface StudentData {
   mail?: string;
   school?: string;
   vs?: string; // string!
-  amount?: number | string; // základná suma (v eurách)
+  amount?: number | string; // base amount (in EUR)
   period?: string; // "Year" | "Half-year" | "Month"
 }
 
@@ -36,17 +36,18 @@ interface PaymentInfo {
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 export const Communication: React.FC = () => {
+  // Central data + UI state for payment checks, filters, and email sending.
   const [students, setStudents] = useState<StudentData[]>([]);
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // číslo 1..10 ktoré používateľ zadá
+  // Number 1..10 entered by the user
   const [installmentIndex, setInstallmentIndex] = useState<number>(1);
 
-  // možnosť prepísať očakávanú sumu lokálne pre študenta: map studentId -> overrideNumber
+  // Option to locally override expected amount for a student: map studentId -> overrideNumber
   const [overrides, setOverrides] = useState<Record<string, number>>({});
 
-  // FILTER TERAZ PODĽA VYPOČÍTANÉHO STAVU: "all" | "paid" | "unpaid" | "overpaid"
+  // Filter by computed status: "all" | "paid" | "unpaid" | "overpaid"
   const [statusFilter, setStatusFilter] = useState<
     "all" | "paid" | "unpaid" | "overpaid"
   >("all");
@@ -62,13 +63,14 @@ export const Communication: React.FC = () => {
   const [messageType, setMessageType] = useState<"success" | "error">("success");
 
   useEffect(() => {
+    // One-shot load on mount: this component uses an immediate Firestore snapshot.
     loadAll();
   }, []);
 
   const loadAll = async () => {
     setLoading(true);
     try {
-      // načítaj študentov
+      // Load + normalize student documents into a typed frontend model.
       const studentsSnap = await getDocs(collection(db, "students"));
       const studentsList: StudentData[] = studentsSnap.docs.map((d) => {
         const data = d.data() as any;
@@ -79,15 +81,15 @@ export const Communication: React.FC = () => {
           mail: data.mail ?? "",
           school: data.school ?? "",
           period: data.period ?? "",
-          // dôležité: vs ako string
+          // Important: keep VS as a string
           vs: data.vs !== undefined && data.vs !== null ? String(data.vs) : "",
-          // amount predpokladáme že je v eurách (číslo)
+          // Amount is expected in EUR
           amount:
             typeof data.amount === "number" ? data.amount : data.amount ? Number(data.amount) : 0,
         };
       });
 
-      // načítaj platby (zoradené podľa date)
+      // Load payments sorted by date for table display.
       const paymentsQ = query(collection(db, "payments"), orderBy("date", "desc"));
       const paymentsSnap = await getDocs(paymentsQ);
       const paymentsList: PaymentInfo[] = paymentsSnap.docs.map((d) => {
@@ -106,7 +108,7 @@ export const Communication: React.FC = () => {
         };
       });
 
-      // zorad podľa priezviska
+      // Sort by surname
       studentsList.sort((a, b) => {
         const as = ((a.surname ?? "") + " " + (a.name ?? "")).toLowerCase();
         const bs = ((b.surname ?? "") + " " + (b.name ?? "")).toLowerCase();
@@ -124,7 +126,7 @@ export const Communication: React.FC = () => {
     }
   };
 
-  // mapovanie studentId -> priradené platby
+  // useMemo pattern: cache derived studentId -> payments mapping for render performance.
   const paymentsByStudentId = useMemo(() => {
     const map = new Map<string, PaymentInfo[]>();
     for (const p of payments) {
@@ -136,7 +138,7 @@ export const Communication: React.FC = () => {
     return map;
   }, [payments]);
 
-  // pomocná: prečíta "base" amount (override alebo zo študenta)
+  // Helper: read base amount (override or student value)
   const baseAmount = (s: StudentData) => {
     const o = overrides[s.id];
     if (o !== undefined) return o;
@@ -144,7 +146,7 @@ export const Communication: React.FC = () => {
     return typeof v === "number" ? v : Number(v ?? 0);
   };
 
-  // očakávaná suma podľa pravidiel
+  // Business-rules function: compute expected amount from period + installment index.
   const expectedForStudent = (s: StudentData) => {
     const base = baseAmount(s);
     const period = (s.period ?? "").toString().toLowerCase();
@@ -160,7 +162,7 @@ export const Communication: React.FC = () => {
     return base * idx;
   };
 
-  // zaplatené (sum všetkých platieb priradených tomuto študentovi)
+  // Paid amount (sum of all payments assigned to this student)
   const paidForStudent = (s: StudentData) => {
     const studentId = (s.id ?? "").trim();
     if (!studentId) return 0;
@@ -171,7 +173,7 @@ export const Communication: React.FC = () => {
     }, 0);
   };
 
-  // status (paid/unpaid/overpaid) podľa expected vs paid
+  // Derived state: status is computed and not persisted separately in the database.
   const statusForStudent = (s: StudentData) => {
     const expected = expectedForStudent(s);
     const paid = paidForStudent(s);
@@ -181,7 +183,7 @@ export const Communication: React.FC = () => {
     return "unpaid";
   };
 
-  // filtered students teraz podľa vypočítaného statusFilter
+  // Combined filter: depends on status, payments, installment index, and override values.
   const filteredStudents = useMemo(() => {
     if (statusFilter === "all") return students;
     return students.filter((s) => {
@@ -190,7 +192,7 @@ export const Communication: React.FC = () => {
     });
   }, [students, statusFilter, paymentsByStudentId, installmentIndex, overrides]);
 
-  // override handler (lokálne)
+  // Override handler (local state)
   const setOverrideForStudent = (studentId: string, value: number) => {
     setOverrides((prev) => ({ ...prev, [studentId]: value }));
   };
@@ -203,6 +205,7 @@ export const Communication: React.FC = () => {
       return;
     }
     try {
+      // updateDoc patches only amount; other document fields remain unchanged.
       await updateDoc(doc(db, "students", studentId), { amount: val });
       setMessage("Očakávaná suma uložená pre študenta.");
       setMessageType("success");
@@ -248,6 +251,7 @@ export const Communication: React.FC = () => {
 
     setSendingEmail(true);
     try {
+      // Selection -> recipient list transform: Set IDs -> filtered email addresses.
       const emails = filteredStudents
         .filter(s => selectedStudents.has(s.id))
         .map(s => s.mail)
@@ -261,6 +265,7 @@ export const Communication: React.FC = () => {
       }
 
       const response = await fetch("/api/send-mail", {
+        // API boundary pattern: frontend sends payload, backend handles SMTP details.
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -318,7 +323,7 @@ export const Communication: React.FC = () => {
           />
         </label>
 
-        {/* FILTER PODĽA VYPOČÍTANÉHO STAVU */}
+        {/* FILTER BY COMPUTED STATUS */}
         <label>
           <p>Filter podľa stavu:</p>
           <select

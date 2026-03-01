@@ -30,6 +30,7 @@ interface PaymentInfo {
 
 
 export const ImportStudents = () => {
+  // Two parallel import workflows: students and payments, each with separate form/feedback state.
   const [file, setFile] = useState<File | null>(null);
   const [filePayments, setFilePayments ] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -42,25 +43,26 @@ export const ImportStudents = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      //console.log("Vybrán soubor pro platby:", e.target.files[0].name);
+      //console.log("Selected students JSON file:", e.target.files[0].name);
       setFile(e.target.files[0]);
       setMessage('');
     }
-    //console.log("Soubor pro platby po změně:", file);
+    //console.log("Students file after change:", file);
   };
 
   const handleFilePaymentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      //console.log("Vybrán soubor pro platby:", e.target.files[0].name);
+      //console.log("Selected payments JSON file:", e.target.files[0].name);
       setFilePayments(e.target.files[0]);
       setMessagePayments('');
     }
-    //console.log("Soubor pro platby po změně:", file);
+    //console.log("Payments file after change:", file);
   };
 
 
 
   const handleImport = async () => {
+    // Guard clause pattern: exit early when input is invalid.
     if (!file) {
       setMessage('Vyberte JSON súbor');
       setMessageType('error');
@@ -69,6 +71,7 @@ export const ImportStudents = () => {
 
     setImporting(true);
     try {
+      // Browser File API -> text -> JSON parse (batch import from local file).
       const text = await file.text();
       console.log(text);
       const students: StudentRecord[] = JSON.parse(text);
@@ -83,13 +86,13 @@ console.log("1");
 
       for (const student of students) {
         try {
-          // Validácia povinných polí
+          // Validate required fields
           if (!student.mail || !student.name || !student.surname) {
             errorCount++;
             continue;
           }
 
-          // Uloženie do Firestore
+          // Write-per-record pattern: each student is stored as a separate Firestore document.
           await addDoc(collection(db, 'students'), {
             name: student.name || '',
             surname: student.surname || '',
@@ -137,6 +140,7 @@ console.log("1");
     setImportingPayments(true);
 
     try {
+      // Same import pipeline for payments collection, separated because schema differs.
       const text = await filePayments.text();
       const payments: PaymentInfo[] = JSON.parse(text);
 
@@ -151,7 +155,7 @@ console.log("1");
         try {
           
 
-          // Uloženie do Firestore
+          // Payments are intentionally not matched here; matching is handled in PaymentsManagement.
           await addDoc(collection(db, 'payments'), {
             date: payment.date,
             amount: payment.amount,

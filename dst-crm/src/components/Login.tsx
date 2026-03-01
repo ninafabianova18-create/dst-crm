@@ -1,12 +1,13 @@
-import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
-import { auth, googleProvider, db } from '../config/firebase';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db } from '../config/firebase';
+import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import '../styles/Login.css';
 
 export const Login = () => {
   const navigate = useNavigate();
+  // UI state machine: login/register mode + form fields + request status.
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,71 +25,37 @@ export const Login = () => {
       }
 
       console.log('Kontrolujem email:', userEmail.toLowerCase());
+      // "students.mail" is the whitelist source for app access.
       const allowedEmailsRef = collection(db, 'students');
 
-      // Teraz kontroluj konkrétny email
+      // Check this specific email against the whitelist source
       const q = query(allowedEmailsRef, where('mail', '==', userEmail.toLowerCase()));
       const querySnapshot = await getDocs(q);
-      console.log('Query výsledok:', querySnapshot.empty ? 'PRÁZDNY' : 'NÁJDENÝ');
-      console.log('Počet zhodných emailov:', querySnapshot.size);
+      console.log('Query result:', querySnapshot.empty ? 'EMPTY' : 'FOUND');
+      console.log('Number of matching emails:', querySnapshot.size);
       
       return !querySnapshot.empty;
     } catch (error) {
-      console.error('Chyba pri kontrole emailu:', error);
+      console.error('Error checking email access:', error);
       return false;
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      // Skontroluj, či je email na whitelist
-      const allowed = await isEmailAllowed(user.email!);
-      
-      if (!allowed) {
-        await signOut(auth);
-        setError('Tento email nemá prístup k aplikácii');
-        return;
-      }
-
-      // Kontrola, či užívateľ už v databáze existuje
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
-      if (!userDoc.exists()) {
-        // Vytvorenie nového užívateľa s rolou 'user'
-        await setDoc(doc(db, 'users', user.uid), {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          role: 'user',
-          createdAt: new Date(),
-        });
-      }
-
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Chyba pri prihlásení:', error);
-      setError('Chyba pri prihlásení cez Google');
-    }
-  };
-
   const handleEmailSignIn = async (e: React.FormEvent) => {
+    // Controlled form submit: preventDefault + explicit loading/error lifecycle.
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      console.log('Pokus o prihlášení s emailom:', email);
-      console.log('Pokus o prihlášení s heslem:', password ? '****' : '(prázdné)');
+      console.log('Sign-in attempt with email:', email);
+      console.log('Sign-in attempt with password:', password ? '****' : '(empty)');
 
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const user = result.user;
+      await signInWithEmailAndPassword(auth, email, password);
 
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Chyba pri prihlásení:', error);
+      console.error('Error during email sign-in:', error);
       if (error.code === 'auth/user-not-found') {
         setError('Užívateľ nenájdený');
       } else if (error.code === 'auth/wrong-password') {
@@ -107,7 +74,7 @@ export const Login = () => {
     setError('');
 
     try {
-      // Skontroluj whitelist pred registráciou
+      // Check whitelist before registration
       const allowed = await isEmailAllowed(email);
       
       if (!allowed) {
@@ -119,13 +86,14 @@ export const Login = () => {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const user = result.user;
 
-      // Nastaviť displayName
+      // Set displayName on Firebase Auth profile
       if (displayName) {
         await updateProfile(user, { displayName });
       }
 
-      // Vytvor nový dokumentu s UID
-      console.log('Vytváram nový dokument s UID:', user.uid);
+      // Create a new Firestore document with UID
+      console.log('Creating new user document with UID:', user.uid);
+      // Denormalized profile snapshot: users collection stores data for role/admin views.
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
         displayName: displayName || 'Užívateľ',
@@ -136,7 +104,7 @@ export const Login = () => {
 
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Chyba pri registrácii:', error);
+      console.error('Error during registration:', error);
       if (error.code === 'auth/email-already-in-use') {
         setError('Email sa už používa');
       } else if (error.code === 'auth/weak-password') {

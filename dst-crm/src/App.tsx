@@ -10,8 +10,11 @@ import { Unauthorized } from './components/Unauthorized'
 
 function App() {
   return (
+    // BrowserRouter provides client-side routing without full page refreshes.
     <BrowserRouter>
+      {/* AuthProvider shares authenticated user/role through React Context across the app. */}
       <AuthProvider>
+        {/* Routes + Route is declarative routing: each path maps to a specific component. */}
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
@@ -21,16 +24,17 @@ function App() {
           <Route
             path="/dashboard"
             element={
+              // ProtectedRoute uses the guard pattern: it decides if the dashboard can render.
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             }
           />
           
-          {/* Presmerovanie na dashboard ak je užívateľ prihlásený, inak na login */}
+          {/* Redirect to dashboard when authenticated, otherwise to login */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
-          {/* 404 stránka */}
+          {/* 404 */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

@@ -1,8 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Vaša Firebase konfigurácia - nahraďte vlastnými hodnotami
+//  Firebase configuration 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -12,14 +12,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Inicializácia Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializácia autentifikácie a Google providera
+// Initialize authentication
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
 
-// Inicializácia Firestore databázy
+// Initialize Firestore database
 export const db = getFirestore(app);
 
 export default app;

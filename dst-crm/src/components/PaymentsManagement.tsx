@@ -11,9 +11,9 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
-import "../styles/PaymentsManagement.css"; // pridaj vlastné štýly
+import "../styles/PaymentsManagement.css"; // component-specific styles
 
-// Typy
+// Types
 interface PaymentInfo {
   id?: string;
   vs: string;
@@ -37,6 +37,7 @@ interface StudentShort {
 type StatusFilter = "all" | "matched" | "unmatched" | "ambiguous";
 
 export const PaymentsManagement: React.FC = () => {
+  // Main component state: payment data + UX states for operations and feedback.
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -46,7 +47,7 @@ export const PaymentsManagement: React.FC = () => {
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
-  // pre priradenie
+  // assignment helper state
   const [searchVS, setSearchVS] = useState("");
   const [studentResults, setStudentResults] = useState<StudentShort[]>([]);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
@@ -56,13 +57,14 @@ export const PaymentsManagement: React.FC = () => {
   const [autoPairing, setAutoPairing] = useState(false);
 
   useEffect(() => {
+    // Mount-time fetch after first render.
     loadPayments();
   }, []);
 
   const loadPayments = async () => {
     setLoading(true);
     try {
-      // načítaj všetky platby, zoradené podľa dátumu (desc)
+      // Query + orderBy pattern: centralized payment overview from newest to oldest.
       const paymentsQ = query(
         collection(db, "payments"),
         orderBy("date", "desc")
@@ -101,6 +103,7 @@ export const PaymentsManagement: React.FC = () => {
 
   const removeAssignment = async (paymentId: string) => {
     try {
+      // Revert match: reset matchedStudentId and set status back to unmatched.
       await updateDoc(doc(db, "payments", paymentId), {
         matchedStudentId: null,
         matchStatus: "unmatched",
@@ -129,11 +132,12 @@ export const PaymentsManagement: React.FC = () => {
     }
   };
 
-  // Hľadaj študentov podľa VS (rýchle vyhľadávanie pri priraďovaní)
+  // Search students by VS (quick lookup during assignment)
   const searchStudentsByVS = async (vs: string) => {
     setStudentResults([]);
     if (!vs.trim()) return;
     try {
+      // VS lookup is the core of manual payment-to-student matching.
       const q = query(collection(db, "students"), where("vs", "==", vs));
       const snap = await getDocs(q);
       const res: StudentShort[] = [];
@@ -162,6 +166,7 @@ export const PaymentsManagement: React.FC = () => {
       console.log("Payment ID:", paymentId);
       console.log("Student ID:", studentId);
       
+      // Atomic update of one payment document during manual matching.
       await updateDoc(doc(db, "payments", paymentId), {
         matchedStudentId: studentId,
         matchStatus: "matched",
@@ -191,6 +196,7 @@ export const PaymentsManagement: React.FC = () => {
     setAutoPairing(true);
     setMessage("");
     try {
+      // Auto-pairing algorithm: students map (vs -> ids) + candidate payment traversal.
       const studentsSnap = await getDocs(collection(db, "students"));
       const studentsByVS = new Map<string, string[]>();
 
@@ -254,6 +260,7 @@ export const PaymentsManagement: React.FC = () => {
         }
       }
 
+      // Batch write technique: chunking under Firestore's 500 operations per batch limit.
       for (let index = 0; index < batchUpdates.length; index += 450) {
         const chunk = batchUpdates.slice(index, index + 450);
         const batch = writeBatch(db);
@@ -278,6 +285,7 @@ export const PaymentsManagement: React.FC = () => {
   };
 
   const filteredPayments = payments.filter((p) => {
+    // Client-side filter simplifies status view switches without another DB query.
     if (statusFilter === "all") return true;
     return (p.matchStatus ?? "unmatched") === statusFilter;
   });
@@ -451,7 +459,7 @@ export const PaymentsManagement: React.FC = () => {
                         </td>
                       </tr>
 
-                      {/* Panel priradenia - otvoríme pod platbou */}
+                      {/* Assignment panel - shown below the payment row */}
                       {selectedPaymentId === p.id && (
                         <tr className="assign-payment-row">
                           <td colSpan={8}>

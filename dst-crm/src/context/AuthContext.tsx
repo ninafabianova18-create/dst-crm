@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser);
       
       if (currentUser) {
-        // Načítanie roly užívateľa z Firestore
+        // Load the user's role from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setRole('student');
           }
         } catch (error) {
-          console.error('Chyba pri načítaní roly užívateľa:', error);
+          console.error('Error loading user role:', error);
           setRole('student');
         }
       } else {
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth musí byť použitý v AuthProvider');
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 };

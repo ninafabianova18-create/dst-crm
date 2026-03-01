@@ -38,11 +38,10 @@ interface PaymentInfo {
   matchedStudentId?: string | null;
 }
 
-// Funkcia tvoriaca komponent UserProfile --> uzivatelsky profil
-//poznamka
+// UserProfile component
 
 export const UserProfile = () => {
-  //premene
+  // Local component state: profile data, edit mode, loading lifecycle, and payments list.
   const { user } = useAuth();
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +52,7 @@ export const UserProfile = () => {
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
 
   const toDateSafe = (value: any): Date | null => {
+    // Defensive programming: supports Firestore Timestamp and string/date inputs.
     if (!value) return null;
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
     if (typeof value?.toDate === "function") {
@@ -68,7 +68,7 @@ export const UserProfile = () => {
       if (!user?.email) return;
 
       try {
-        // 1) nájdi študenta podľa mailu
+        // 1) Find the student's profile by the authenticated user's email.
         const studentQ = query(
           collection(db, "students"),
           where("mail", "==", user.email)
@@ -77,7 +77,7 @@ export const UserProfile = () => {
         const studentSnap = await getDocs(studentQ);
 
         if (studentSnap.empty) {
-          setStudentData(null as any); // alebo ako riešiš "nenájdené"
+          setStudentData(null as any); // handle "not found" state
           setPayments([]);
           setLoading(false);
           return;
@@ -85,12 +85,12 @@ export const UserProfile = () => {
 
         const studentDoc = studentSnap.docs[0];
         const student = studentDoc.data() as StudentData;
-        console.log("Našiel som študenta:", student); // pro debug, můžeš odstranit
+        console.log("Found student profile:", student); // debug only
         setStudentData(student);
         setEditedData(student);
         setStudentDocId(studentDoc.id);
 
-        // 2) dotiahni platby priradené ku tomuto študentovi (podľa VS)
+        // 2) Load payments by VS (variable symbol), then normalize them for UI.
         const studentId = studentDoc.id;
         const vs = String(student.vs ?? "").trim();
 
@@ -100,14 +100,14 @@ export const UserProfile = () => {
         console.log("Student VS:", vs);
 
         if (!vs) {
-          console.log("Študent nemá VS, nebudú žiadne platby");
+          console.log("Student has no VS, no payments will be loaded.");
           setPayments([]);
           setLoading(false);
           return;
         }
 
         try {
-          // Najprv skúsme nájsť všetky platby s týmto VS (bez filtrovania na matchStatus)
+          // Query + orderBy pattern: show newest payments first.
           const paymentsQ = query(
             collection(db, "payments"),
             where("vs", "==", vs),
@@ -115,7 +115,7 @@ export const UserProfile = () => {
           );
 
           const paymentsSnap = await getDocs(paymentsQ);
-          console.log("Počet VŠETKÝCH platieb s týmto VS:", paymentsSnap.size);
+          console.log("Total payments with this VS:", paymentsSnap.size);
           
           const paymentsData = paymentsSnap.docs.map((d) => {
             const p = d.data() as any;
@@ -138,29 +138,29 @@ export const UserProfile = () => {
             } as PaymentInfo;
           });
 
-          // Filtrujeme len "matched" platby (alebo platby kde matchStatus chýba - pre spätnosť)
+          // Business filter: show only matched payments (plus legacy rows without matchStatus).
           const matchedPayments = paymentsData.filter(
             p => p.matchStatus === "matched" || !p.matchStatus
           );
           
-          console.log("Počet matched platieb:", matchedPayments.length);
+          console.log("Matched payments count:", matchedPayments.length);
           console.log("Payments data na zobrazenie:", matchedPayments);
           setPayments(matchedPayments);
         } catch (queryError: any) {
-          console.error("CHYBA PRI QUERY PLATIEB:", queryError);
+          console.error("PAYMENTS QUERY ERROR:", queryError);
           console.error("Error code:", queryError?.code);
           console.error("Error message:", queryError?.message);
           
-          // Ak je problém s indexom, Firestore vráti failed-precondition
+          // If a composite index is missing, Firestore returns failed-precondition.
           if (queryError?.code === 'failed-precondition') {
-            console.error("❌ FIRESTORE INDEX CHÝBA! Vytvor index na adrese, ktorá sa zobrazí v chybe vyššie.");
+            console.error("❌ FIRESTORE INDEX IS MISSING. Create the index using the link in the error output.");
           }
           
           setPayments([]);
         }
         setLoading(false);
       } catch (error) {
-        console.error("Chyba pri načítaní profilu/platieb:", error);
+        console.error("Error loading profile/payments:", error);
         setLoading(false);
       }
     };
@@ -187,7 +187,7 @@ export const UserProfile = () => {
       setStudentData(editedData);
       setIsEditing(false);
     } catch (error) {
-      console.error("Chyba pri uložení údajov:", error);
+      console.error("Error saving profile data:", error);
       alert("Chyba pri uložení údajov");
     } finally {
       setIsSaving(false);
@@ -208,6 +208,7 @@ export const UserProfile = () => {
   }
 
   const normalizePeriod = (value?: string) => {
+    // Normalize period text variants into a numeric multiplier for financial calculations.
     const v = (value ?? "").toLowerCase().trim();
     if (v === "year" || v === "yearly") return 1;
     if (v.startsWith("half")) return 2;
@@ -221,6 +222,7 @@ export const UserProfile = () => {
   const targetTotal = amountPerInstallment * installmentsPerYear;
 
   const paidSoFar = payments.reduce((sum, payment) => {
+    // Reduce pattern: aggregate all payment amounts into one total.
     const amount = Number(String(payment.amount ?? "0").replace(",", "."));
     return sum + (Number.isNaN(amount) ? 0 : amount);
   }, 0);
@@ -305,6 +307,7 @@ export const UserProfile = () => {
     unpaidAmount: number,
     today = new Date()
   ) {
+    // Deadline is calendar-based (school-year timeline), not tied to paid installment count.
     const plan = getPlanFromStudent(periodRaw, typeOfPaymentRaw);
     const schoolYearStart = getSchoolYearStart(today);
     const deadlines = getDeadlinesForPlan(plan, schoolYearStart);

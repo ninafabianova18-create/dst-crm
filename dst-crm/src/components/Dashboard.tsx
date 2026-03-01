@@ -18,12 +18,14 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 
 
 export const Dashboard = () => {
+  // Active admin tab UI state: idiomatic React pattern with a single source of UI truth.
   const [adminTab, setAdminTab] = useState<'import' | 'communication' | 'students'| 'emails' | 'payments' | 'users' | 'statistics'>('import');
   const { user, role, isAdmin, isTeam } = useAuth();
   const [dashboardName, setDashboardName] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Effect pattern: derive the display name with fallbacks (displayName -> students -> email).
     const resolveDashboardName = async () => {
       if (!user) {
         setDashboardName('');
@@ -56,7 +58,7 @@ export const Dashboard = () => {
             }
           }
         } catch (error) {
-          console.error('Chyba pri načítaní mena študenta:', error);
+          console.error('Error loading student name:', error);
         }
 
         setDashboardName(user.email.split('@')[0]);
@@ -71,10 +73,11 @@ export const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
+      // Explicit signOut + programmatic navigation via useNavigate.
       await signOut(auth);
       navigate('/login');
     } catch (error) {
-      console.error('Chyba pri odhlášení:', error);
+      console.error('Error during sign out:', error);
     }
   };
 
@@ -99,6 +102,7 @@ export const Dashboard = () => {
       </header>
 
       <main className="dashboard-main">
+        {/* Role-based conditional rendering: admin tab shell, team stats only, student profile only. */}
         {isAdmin ? (
           <div className="admin-section">
             <div className="admin-tabs">

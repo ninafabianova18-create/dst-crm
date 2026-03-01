@@ -12,17 +12,20 @@ interface User {
 }
 
 export const UsersManagement = () => {
+  // Local state stores: data, loading state, and feedback banner.
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
+    // One-shot data fetch on mount (no realtime listener / onSnapshot).
     loadUsers();
   }, []);
 
   const loadUsers = async () => {
     try {
+      // Read-all + map transform pattern: Firestore docs -> typed UI model.
       const querySnapshot = await getDocs(collection(db, 'users'));
       const usersList: User[] = [];
       querySnapshot.forEach((doc) => {
@@ -36,7 +39,7 @@ export const UsersManagement = () => {
       });
       setUsers(usersList.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     } catch (error) {
-      console.error('Chyba pri načítaní užívateľov:', error);
+      console.error('Error loading users:', error);
       setMessage('Chyba pri načítaní užívateľov');
       setMessageType('error');
     } finally {
@@ -46,6 +49,7 @@ export const UsersManagement = () => {
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'student' | 'team') => {
     try {
+      // Targeted updateDoc: update only the role field without overwriting the whole document.
       await updateDoc(doc(db, 'users', userId), {
         role: newRole,
       });
@@ -55,7 +59,7 @@ export const UsersManagement = () => {
       setMessageType('success');
       loadUsers();
     } catch (error) {
-      console.error('Chyba pri zmene roly:', error);
+      console.error('Error changing role:', error);
       setMessage('Chyba pri zmene roly');
       setMessageType('error');
     }

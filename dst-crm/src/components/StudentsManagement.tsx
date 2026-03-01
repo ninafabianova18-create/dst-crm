@@ -8,7 +8,7 @@ type MatchStatus = "matched" | "unmatched" | "ambiguous";
 interface StudentData {
   id: string;
 
-  // “známe” polia (aby si mal typy + autocomplete)
+  // Known fields (for typing + autocomplete)
   name?: string;
   surname?: string;
   region?: string;
@@ -24,7 +24,7 @@ interface StudentData {
 
   createdAt?: Date | null;
 
-  // ak máš ďalšie polia v students kolekcii, zachytíme ich sem:
+  // If there are additional fields in the students collection, capture them here:
   [key: string]: any;
 }
 
@@ -41,6 +41,7 @@ interface PaymentInfo {
 }
 
 const toDateSafe = (v: any): Date | null => {
+  // Robust converter: handles Firestore Timestamp, Date, and string timestamp.
   if (!v) return null;
   if (v?.toDate) return v.toDate();
   if (v instanceof Date) return v;
@@ -51,6 +52,7 @@ const toDateSafe = (v: any): Date | null => {
 const toStringSafe = (v: any) => (v === undefined || v === null ? "" : String(v));
 
 export const StudentsManagement: React.FC = () => {
+  // Component combines two datasets (students + payments) into one admin view.
   const [students, setStudents] = useState<StudentData[]>([]);
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,19 +60,20 @@ export const StudentsManagement: React.FC = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
 
-  // rozbalené sekcie
+  // expanded sections
   const [expandedPayments, setExpandedPayments] = useState<Record<string, boolean>>({});
   const [expandedProfile, setExpandedProfile] = useState<Record<string, boolean>>({});
 
-  // hľadanie
+  // search
   const [search, setSearch] = useState("");
 
-  // edit režim + draft dáta
+  // edit mode + draft data
   const [editModeById, setEditModeById] = useState<Record<string, boolean>>({});
   const [draftById, setDraftById] = useState<Record<string, Partial<StudentData>>>({});
   const [savingById, setSavingById] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    // One-shot initial load bez realtime listenerov.
     loadAll();
   }, []);
 
@@ -78,16 +81,16 @@ export const StudentsManagement: React.FC = () => {
     setLoading(true);
     setMessage("");
     try {
-      // 1) Students
+      // 1) Load students and normalize data types for consistent UI behavior.
       const studentsSnap = await getDocs(collection(db, "students"));
       const studentsList: StudentData[] = studentsSnap.docs.map((d) => {
         const data = d.data() as any;
 
-        // všetky polia prekopírujeme (komplexnejší profil)
+        // Copy all fields (richer profile view)
         const student: StudentData = {
           id: d.id,
           ...data,
-          // normalizácie:
+          // normalizations:
           vs: data.vs !== undefined && data.vs !== null ? String(data.vs) : "",
           createdAt: toDateSafe(data.createdAt),
         };
@@ -95,7 +98,7 @@ export const StudentsManagement: React.FC = () => {
         return student;
       });
 
-      // 2) Payments (zoradené podľa date desc)
+      // 2) Load payments; these are used for fast VS-based linking.
       const paymentsQ = query(collection(db, "payments"), orderBy("date", "desc"));
       const paymentsSnap = await getDocs(paymentsQ);
 
@@ -114,7 +117,7 @@ export const StudentsManagement: React.FC = () => {
         };
       });
 
-      // Sort students (podľa priezviska, mena)
+      // Sort students (by surname, then name)
       studentsList.sort((a, b) => {
         const as = `${a.surname ?? ""} ${a.name ?? ""}`.toLowerCase();
         const bs = `${b.surname ?? ""} ${b.name ?? ""}`.toLowerCase();
@@ -124,7 +127,7 @@ export const StudentsManagement: React.FC = () => {
       setStudents(studentsList);
       setPayments(paymentsList);
 
-      // ak ešte nemáš draft pre študentov, predvyplníme
+      // Draft-cache pattern: local edit buffer separated from original DB data.
       setDraftById((prev) => {
         const next = { ...prev };
         for (const s of studentsList) {
@@ -158,6 +161,7 @@ export const StudentsManagement: React.FC = () => {
 
   const assignPaymentToStudent = async (paymentId: string, studentId: string) => {
     try {
+      // Directly updates payment document to explicitly assign it to a student.
       await updateDoc(doc(db, "payments", paymentId), {
         matchedStudentId: studentId,
         matchStatus: "matched",
@@ -170,7 +174,7 @@ export const StudentsManagement: React.FC = () => {
     }
   };
 
-  // Map: vs -> payments[]
+  // useMemo: precomputed VS-based payment index speeds up rendering of large tables.
   const paymentsByVS = useMemo(() => {
     const map = new Map<string, PaymentInfo[]>();
     for (const p of payments) {
@@ -183,6 +187,7 @@ export const StudentsManagement: React.FC = () => {
   }, [payments]);
 
   const filteredStudents = useMemo(() => {
+    // Full-text-ish client filter over a combined "blob" of key fields.
     const q = search.trim().toLowerCase();
     if (!q) return students;
 
@@ -227,17 +232,17 @@ export const StudentsManagement: React.FC = () => {
         iban: student.iban ?? "",
         note: student.note ?? "",
         vs: student.vs ?? "",
-        // ak chceš editovať aj ďalšie custom polia z kolekcie students,
-        // doplň ich sem (alebo sprav dynamický editor).
+        // If you want to edit more custom fields from students collection,
+        // add them here (or implement a dynamic editor).
       },
     }));
   };
 
   const cancelEdit = (student: StudentData) => {
     setEditModeById((prev) => ({ ...prev, [student.id]: false }));
-    // reset draft na aktuálne hodnoty
+    // Reset draft to current values
     startEdit(student);
-    // ale startEdit by znovu zapol editMode, tak to spravíme ručne:
+    // startEdit would toggle editMode back on, so we set it manually:
     setEditModeById((prev) => ({ ...prev, [student.id]: false }));
   };
 
@@ -247,13 +252,13 @@ export const StudentsManagement: React.FC = () => {
     setMessage("");
 
     try {
-      // normalizácie pred uložením
+      // Normalization-before-write: shape data for Firestore consistency and comparisons.
       const payload: any = {
         ...draft,
         vs: draft.vs !== undefined && draft.vs !== null ? String(draft.vs) : "",
       };
 
-      // amount: skús prehodiť na číslo ak je to číselný string
+      // amount: convert to number when it is a numeric string
       if (payload.amount !== undefined && payload.amount !== null) {
         const n = typeof payload.amount === "number" ? payload.amount : Number(String(payload.amount).replace(",", "."));
         if (!isNaN(n)) payload.amount = n;
@@ -332,7 +337,7 @@ export const StudentsManagement: React.FC = () => {
 
                   return (
                     <React.Fragment key={s.id}>
-                      {/* RIADOK ŠTUDENTA */}
+                      {/* STUDENT ROW */}
                       <tr>
                         <td className="name-cell">
                           <div className="name-strong">{`${s.name ?? ""} ${s.surname ?? ""}`.trim() || "-"}</div>
@@ -430,7 +435,7 @@ export const StudentsManagement: React.FC = () => {
                                   )}
                                 </div>
 
-                                {/* TELEFÓN */}
+                                {/* PHONE */}
                                 <div>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>Telefón</div>
                                   {isEditing ? (
@@ -458,7 +463,7 @@ export const StudentsManagement: React.FC = () => {
                                   )}
                                 </div>
 
-                                {/* ŠKOLA */}
+                                {/* SCHOOL */}
                                 <div>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>Škola</div>
                                   {isEditing ? (
@@ -472,7 +477,7 @@ export const StudentsManagement: React.FC = () => {
                                   )}
                                 </div>
 
-                                {/* REGIÓN */}
+                                {/* REGION */}
                                 <div>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>Región</div>
                                   {isEditing ? (
@@ -514,7 +519,7 @@ export const StudentsManagement: React.FC = () => {
                                   )}
                                 </div>
 
-                                {/* TYP PLATBY */}
+                                {/* PAYMENT TYPE */}
                                 <div>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>Typ platby</div>
                                   {isEditing ? (
@@ -571,7 +576,7 @@ export const StudentsManagement: React.FC = () => {
                                   )}
                                 </div>
 
-                                {/* BONUS: Zobrazenie “ostatných” fields (read-only), aby si videl čo ešte existuje v docs */}
+                                {/* BONUS: Show "other" fields (read-only) so existing doc fields are visible */}
                                 {!isEditing && (
                                   <div style={{ gridColumn: "1 / -1", marginTop: 8, opacity: 0.9 }}>
                                     <details>
@@ -594,7 +599,7 @@ export const StudentsManagement: React.FC = () => {
                         </tr>
                       )}
 
-                      {/* PLATBY */}
+                      {/* PAYMENTS */}
                       {isPaymentsOpen && (
                         <tr className="payments-row">
                           <td colSpan={8}>

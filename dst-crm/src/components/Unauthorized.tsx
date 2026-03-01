@@ -3,6 +3,7 @@ import '../styles/Unauthorized.css';
 
 export const Unauthorized = () => {
   return (
+    // Simple presentational component: no local state, only user feedback and navigation.
     <div className="unauthorized-container">
       <div className="unauthorized-box">
         <h1>403</h1>

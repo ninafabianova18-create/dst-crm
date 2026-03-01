@@ -10,6 +10,7 @@ interface AllowedEmail {
 }
 
 export const AllowedEmails = () => {
+  // Component-level state: list data, form input, and UX feedback states.
   const [emails, setEmails] = useState<AllowedEmail[]>([]);
   const [newEmail, setNewEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,7 @@ export const AllowedEmails = () => {
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
+    // Mount-time fetch pattern to initialize the table.
     loadEmails();
   }, []);
 
@@ -44,13 +46,14 @@ export const AllowedEmails = () => {
   const handleAddEmail = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Guard clauses: validate input before sending any backend/Firestore request.
     if (!newEmail.trim()) {
       setMessage('Zadajte email');
       setMessageType('error');
       return;
     }
 
-    // Validácia emailu
+    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
       setMessage('Neplatný email formát');
@@ -58,7 +61,7 @@ export const AllowedEmails = () => {
       return;
     }
 
-    // Kontrola či už email existuje
+    // Duplicate check to avoid inserting the same email twice
     if (emails.some((e) => e.email.toLowerCase() === newEmail.toLowerCase())) {
       setMessage('Tento email je už v zozname');
       setMessageType('error');
@@ -66,6 +69,7 @@ export const AllowedEmails = () => {
     }
 
     try {
+      // Lowercase normalization keeps email comparisons consistent.
       await addDoc(collection(db, 'allowedEmails'), {
         email: newEmail.toLowerCase(),
         addedAt: new Date(),

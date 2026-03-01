@@ -37,6 +37,7 @@ interface FinanceStats {
 }
 
 export const Statistics: React.FC = () => {
+  // Dashboard analytics state: tab switching + source datasets + region filter.
   const [tab, setTab] = useState<'overview' | 'finance' | 'students'>('overview');
   const [students, setStudents] = useState<StudentData[]>([]);
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
@@ -45,6 +46,7 @@ export const Statistics: React.FC = () => {
   const [regionMode, setRegionMode] = useState<string>('all');
 
   const normalizeRegion = (rawValue: string) => {
+    // Data-normalization pattern: map various region formats to one canonical code.
     const raw = (rawValue ?? '').trim();
     if (!raw) return 'Neznámy kraj';
 
@@ -67,13 +69,14 @@ export const Statistics: React.FC = () => {
   };
 
   useEffect(() => {
+    // Initial data hydration for all statistical calculations.
     loadStats();
   }, []);
 
   const loadStats = async () => {
     setLoading(true);
     try {
-      // Načítaj študentov
+      // Students snapshot -> typed model transform.
       const studentsSnap = await getDocs(collection(db, "students"));
       const studentsList: StudentData[] = studentsSnap.docs.map((d) => {
         const data = d.data() as any;
@@ -91,7 +94,7 @@ export const Statistics: React.FC = () => {
         };
       });
 
-      // Načítaj platby
+      // Payments snapshot -> typed model transform.
       const paymentsQ = query(collection(db, "payments"), orderBy("date", "desc"));
       const paymentsSnap = await getDocs(paymentsQ);
       const paymentsList: PaymentInfo[] = paymentsSnap.docs.map((d) => {
@@ -105,7 +108,7 @@ export const Statistics: React.FC = () => {
         };
       });
 
-      // Extrakt regióny (kraje) z údajov o školách
+      // Derive unique regions for regional breakdowns.
       const uniqueRegions = [...new Set(studentsList.map((s) => getStudentRegion(s)))];
       setRegions(uniqueRegions.sort());
 
@@ -118,13 +121,13 @@ export const Statistics: React.FC = () => {
     }
   };
 
-  // Vypočítaj Finance štatistiky pre všetkých študentov
+  // Aggregation function: paid/expected/difference/final for all or a subset of students.
   const calculateFinanceStats = (studentIds?: string[]): FinanceStats => {
     const relevantStudents = studentIds 
       ? students.filter(s => studentIds.includes(s.id))
       : students;
 
-    // Paid: suma všetkých platieb
+    // Paid: sum of all payments
     const paid = payments.reduce((acc, p) => {
       if (studentIds) {
         if (!p.matchedStudentId || !studentIds.includes(p.matchedStudentId)) {
@@ -134,13 +137,13 @@ export const Statistics: React.FC = () => {
       return acc + (p.amount || 0);
     }, 0);
 
-    // Expected: suma platieb očakávaných v danom období
-    // Logika: rok začína v septembri (mesiac 9)
-    // Oktober: všetci, Nov-Dec-Jan: len mesačne, Feb: mesačne+polročne, Mar-Jul: len mesačne
+    // Expected is time-dependent by academic month and period rules.
+    // Logic: school year starts in September (month 9).
+    // October: all, Nov-Dec-Jan: monthly only, Feb: monthly+half-year, Mar-Jul: monthly only.
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1; // 1-12
     
-    // Zistiť, v ktorom akademickom mesiaci sme (0 = september, 1 = október, ...)
+    // Determine current academic month (0 = September, 1 = October, ...)
     let academicMonth = currentMonth - 9;
     if (academicMonth <= 0) {
       academicMonth += 12; // ak sme pred septembrom, pridaj 12
@@ -152,22 +155,22 @@ export const Statistics: React.FC = () => {
       const monthlyAmount = student.amount || 0;
 
       if (period === "month" || period === "monthly") {
-        // Mesačne sa očakáva všetky mesiace
+        // Monthly period is expected every month
         expected += monthlyAmount;
       } else if (period === "half-year" || period === "halfyear" || period === "half year") {
-        // Polročne: február je 5. akademický mesiac
+        // Half-year: February is the 5th academic month
         if (academicMonth === 5) {
           expected += monthlyAmount;
         }
       } else if (period === "year" || period === "yearly") {
-        // Ročne: október je 1. akademický mesiac
+        // Yearly: October is the 1st academic month
         if (academicMonth === 1) {
           expected += monthlyAmount;
         }
       }
     }
 
-    // Final: celková suma ocakávaných platieb za celý akademický rok
+    // Final is full-year projection by periodicity type (1/2/10 installments).
     let final = 0;
     for (const student of relevantStudents) {
       const period = (student.period ?? "").toLowerCase();
@@ -210,6 +213,7 @@ export const Statistics: React.FC = () => {
   };
 
   const calculateStudentStats = (sourceStudents: StudentData[]) => {
+    // Reduce pattern: compute multiple stats at once (periodicity, classic tiers, scholarship tiers).
     const periodStats = sourceStudents.reduce(
       (acc, student) => {
         const period = normalizePeriod(student.period);
@@ -308,7 +312,7 @@ export const Statistics: React.FC = () => {
         </button>
       </div>
 
-      {/* TAB: PREHĽAD */}
+      {/* TAB: OVERVIEW */}
       {tab === 'overview' && (
         <div className="statistics-tab-content">
           <div className="stats-grid">
@@ -349,7 +353,7 @@ export const Statistics: React.FC = () => {
       {/* TAB: FINANCE */}
       {tab === 'finance' && (
         <div className="statistics-tab-content">
-          {/* Tabuľka so všetkými štatistikami */}
+          {/* Table with all statistics */}
           <div className="finance-table-section">
             <div className="statistics-card-header">
               <h3>Finančný prehľad - Celkom</h3>
@@ -379,7 +383,7 @@ export const Statistics: React.FC = () => {
             </div>
           </div>
 
-          {/* Karty podľa krajov (regiónov) */}
+          {/* Cards by regions */}
           <div className="regions-section">
             <div className="region-modes">
               <button
@@ -450,7 +454,7 @@ export const Statistics: React.FC = () => {
         </div>
       )}
 
-      {/* TAB: ŠTUDENTI */}
+      {/* TAB: STUDENTS */}
       {tab === 'students' && (
         <div className="statistics-tab-content">
           <div className="finance-table-section">
