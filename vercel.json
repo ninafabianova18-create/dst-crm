@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd dst-crm && npm run build",
+  "outputDirectory": "dst-crm/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
