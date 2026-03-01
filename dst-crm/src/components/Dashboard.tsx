@@ -5,20 +5,70 @@ import { useNavigate } from 'react-router-dom';
 import { ImportStudents } from './ImportStudents';
 import { AllowedEmails } from './AllowedEmails';
 import { UsersManagement } from './UsersManagement';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/Dashboard.css';
 import { UserProfile } from './UserProfile';
 import PaymentsManagement from './PaymentsManagement';
 import StudentsManagement from './StudentsManagement';
 import Communication from './Communacation';
 import { Statistics } from './Statistics';                                                              
+import { db } from '../config/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 
 
 export const Dashboard = () => {
   const [adminTab, setAdminTab] = useState<'import' | 'communication' | 'students'| 'emails' | 'payments' | 'users' | 'statistics'>('import');
   const { user, role, isAdmin, isTeam } = useAuth();
+  const [dashboardName, setDashboardName] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const resolveDashboardName = async () => {
+      if (!user) {
+        setDashboardName('');
+        return;
+      }
+
+      if (user.displayName?.trim()) {
+        setDashboardName(user.displayName.trim());
+        return;
+      }
+
+      if (user.email) {
+        try {
+          const studentQ = query(
+            collection(db, 'students'),
+            where('mail', '==', user.email)
+          );
+          const studentSnap = await getDocs(studentQ);
+
+          if (!studentSnap.empty) {
+            const studentData = studentSnap.docs[0].data() as {
+              name?: string;
+              surname?: string;
+            };
+            const fullName = `${studentData.name ?? ''} ${studentData.surname ?? ''}`.trim();
+
+            if (fullName) {
+              setDashboardName(fullName);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Chyba pri načítaní mena študenta:', error);
+        }
+
+        setDashboardName(user.email.split('@')[0]);
+        return;
+      }
+
+      setDashboardName('Používateľ');
+    };
+
+    resolveDashboardName();
+  }, [user]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -32,7 +82,7 @@ export const Dashboard = () => {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div className="header-content">
-          <h1>Vitajte, {user?.displayName}</h1>
+          <h1>Vitajte, {dashboardName || 'Používateľ'}</h1>
           <div className="user-info">
             <span className={`role-badge ${role}`}>
               {role === 'admin' ? 'Administrátor' : role === 'team' ? 'Team' : 'Študent'}
