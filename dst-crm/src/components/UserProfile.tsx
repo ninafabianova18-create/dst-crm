@@ -1,15 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../config/firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  doc,
-  orderBy,
-} from "firebase/firestore";
+import { collection,  query,  where,  getDocs,  updateDoc,  doc,  orderBy} from "firebase/firestore";
 import "../styles/UserProfile.css";
 
 interface StudentData {
