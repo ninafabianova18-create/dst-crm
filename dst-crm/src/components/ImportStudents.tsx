@@ -155,7 +155,7 @@ console.log("1");
         try {
           
 
-          // Payments are intentionally not matched here; matching is handled in PaymentsManagement.
+          // Payments.
           await addDoc(collection(db, 'payments'), {
             date: payment.date,
             amount: payment.amount,

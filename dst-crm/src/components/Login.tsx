@@ -28,7 +28,7 @@ export const Login = () => {
       // "students.mail" is the whitelist source for app access.
       const allowedEmailsRef = collection(db, 'students');
 
-      // Check this specific email against the whitelist source
+      // Check email against the whitelist source
       const q = query(allowedEmailsRef, where('mail', '==', userEmail.toLowerCase()));
       const querySnapshot = await getDocs(q);
       console.log('Query result:', querySnapshot.empty ? 'EMPTY' : 'FOUND');
