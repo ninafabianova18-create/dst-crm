@@ -62,12 +62,12 @@ export const Dashboard = () => {
         }
 
         setDashboardName(user.email.split('@')[0]);
+        console.log('/////////////////////No displayName or email available for user:', role);
+   
         return;
       }
-
       setDashboardName('Používateľ');
     };
-
     resolveDashboardName();
   }, [user]);
 
