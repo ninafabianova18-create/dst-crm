@@ -20,6 +20,9 @@ interface StudentData {
   amount?: number | string;
   iban?: string;
   note?: string;
+  noteNeedsReview?: boolean;
+  noteUpdatedAt?: Date | null;
+  noteUpdatedBy?: string;
   vs?: string; // drž ako string
 
   createdAt?: Date | null;
@@ -51,7 +54,11 @@ const toDateSafe = (v: any): Date | null => {
 
 const toStringSafe = (v: any) => (v === undefined || v === null ? "" : String(v));
 
-export const StudentsManagement: React.FC = () => {
+interface StudentsManagementProps {
+  onRemindersChanged?: (count: number) => void;
+}
+
+export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemindersChanged }) => {
   // Component combines two datasets (students + payments) into one admin view.
   const [students, setStudents] = useState<StudentData[]>([]);
   const [payments, setPayments] = useState<PaymentInfo[]>([]);
@@ -66,6 +73,7 @@ export const StudentsManagement: React.FC = () => {
 
   // search
   const [search, setSearch] = useState("");
+  const [noteReminderFilter, setNoteReminderFilter] = useState<"all" | "pending">("all");
 
   // edit mode + draft data
   const [editModeById, setEditModeById] = useState<Record<string, boolean>>({});
@@ -93,6 +101,9 @@ export const StudentsManagement: React.FC = () => {
           // normalizations:
           vs: data.vs !== undefined && data.vs !== null ? String(data.vs) : "",
           createdAt: toDateSafe(data.createdAt),
+          noteUpdatedAt: toDateSafe(data.noteUpdatedAt),
+          noteNeedsReview: !!data.noteNeedsReview,
+          noteUpdatedBy: data.noteUpdatedBy ?? "",
         };
 
         return student;
@@ -126,6 +137,8 @@ export const StudentsManagement: React.FC = () => {
 
       setStudents(studentsList);
       setPayments(paymentsList);
+      const remindersCount = studentsList.filter((s) => s.noteNeedsReview).length;
+      onRemindersChanged?.(remindersCount);
 
       // Draft-cache pattern: local edit buffer separated from original DB data.
       setDraftById((prev) => {
@@ -189,13 +202,14 @@ export const StudentsManagement: React.FC = () => {
   const filteredStudents = useMemo(() => {
     // Full-text-ish client filter over a combined "blob" of key fields.
     const q = search.trim().toLowerCase();
-    if (!q) return students;
-
     return students.filter((s) => {
+      if (noteReminderFilter === "pending" && !s.noteNeedsReview) return false;
+      if (!q) return true;
+
       const blob = `${s.name ?? ""} ${s.surname ?? ""} ${s.mail ?? ""} ${s.school ?? ""} ${s.vs ?? ""} ${s.telephoneNumber ?? ""}`.toLowerCase();
       return blob.includes(q);
     });
-  }, [students, search]);
+  }, [students, search, noteReminderFilter]);
 
   const togglePayments = (studentId: string) => {
     setExpandedPayments((prev) => ({ ...prev, [studentId]: !prev[studentId] }));
@@ -280,6 +294,47 @@ export const StudentsManagement: React.FC = () => {
     }
   };
 
+  const markStudentNoteAsReviewed = async (studentId: string) => {
+    try {
+      await updateDoc(doc(db, "students", studentId), {
+        noteNeedsReview: false,
+      });
+
+      setMessage("Poznámka bola označená ako skontrolovaná.");
+      setMessageType("success");
+      await loadAll();
+    } catch (err) {
+      console.error("Chyba pri označení poznámky:", err);
+      setMessage("Chyba pri označení poznámky");
+      setMessageType("error");
+    }
+  };
+
+  const markAllNotesAsReviewed = async () => {
+    const pending = students.filter((s) => s.noteNeedsReview);
+    if (pending.length === 0) return;
+
+    try {
+      await Promise.all(
+        pending.map((s) =>
+          updateDoc(doc(db, "students", s.id), {
+            noteNeedsReview: false,
+          })
+        )
+      );
+
+      setMessage("Všetky nové poznámky sú označené ako skontrolované.");
+      setMessageType("success");
+      await loadAll();
+    } catch (err) {
+      console.error("Chyba pri hromadnom označení poznámok:", err);
+      setMessage("Chyba pri hromadnom označení poznámok");
+      setMessageType("error");
+    }
+  };
+
+  const pendingNoteReminders = students.filter((s) => s.noteNeedsReview).length;
+
   if (loading) {
     return <div className="students-management-container">Načítavam študentov...</div>;
   }
@@ -293,6 +348,17 @@ export const StudentsManagement: React.FC = () => {
 
       {message && <div className={`message message-${messageType}`}>{message}</div>}
 
+      {pendingNoteReminders > 0 && (
+        <div className="note-reminder-banner">
+          <span>
+            Nové študentské poznámky na kontrolu: <b>{pendingNoteReminders}</b>
+          </span>
+          <button className="btn btn-warning" onClick={markAllNotesAsReviewed}>
+            Označiť všetko ako skontrolované
+          </button>
+        </div>
+      )}
+
       <div className="students-card">
         <div className="students-toolbar">
           <input
@@ -301,6 +367,34 @@ export const StudentsManagement: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+
+          <div className="students-filter-buttons">
+            <button
+              className={`btn ${noteReminderFilter === "pending" ? "btn-warning" : ""}`}
+              onClick={() => setNoteReminderFilter("pending")}
+              type="button"
+            >
+              Nové správy
+            </button>
+            <button
+              className={`btn ${noteReminderFilter === "all" ? "btn-filter-active" : ""}`}
+              onClick={() => setNoteReminderFilter("all")}
+              type="button"
+            >
+              Zobraziť všetkých
+            </button>
+          </div>
+
+          <select
+            className="students-filter"
+            value={noteReminderFilter}
+            onChange={(e) => setNoteReminderFilter(e.target.value as "all" | "pending")}
+            title="Filter poznámok"
+          >
+            <option value="all">Všetci študenti</option>
+            <option value="pending">Len nové poznámky</option>
+          </select>
+
           <span className="students-count">
             Zobrazené: <b>{filteredStudents.length}</b> / {students.length}
           </span>
@@ -352,6 +446,16 @@ export const StudentsManagement: React.FC = () => {
                           <span className="payments-pill">{studentPayments.length}</span>
                         </td>
                         <td style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {s.noteNeedsReview && (
+                            <button
+                              className="btn btn-warning"
+                              onClick={() => markStudentNoteAsReviewed(s.id)}
+                              title="Študent upravil poznámku"
+                            >
+                              Nová poznámka
+                            </button>
+                          )}
+
                           <button className="btn" onClick={() => toggleProfile(s.id)}>
                             {isProfileOpen ? "Skryť profil" : "Profil"}
                           </button>
@@ -377,6 +481,9 @@ export const StudentsManagement: React.FC = () => {
                                   <b>Profil študenta</b>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                                     ID: {s.id} {s.createdAt ? `• Vytvorený: ${s.createdAt.toLocaleString("sk-SK")}` : ""}
+                                    {s.noteNeedsReview
+                                      ? ` • Poznámka upravená${s.noteUpdatedAt ? `: ${s.noteUpdatedAt.toLocaleString("sk-SK")}` : ""}`
+                                      : ""}
                                   </div>
                                 </div>
 

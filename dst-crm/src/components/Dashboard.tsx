@@ -22,6 +22,7 @@ export const Dashboard = () => {
   const [adminTab, setAdminTab] = useState<'import' | 'communication' | 'students'| 'emails' | 'payments' | 'users' | 'statistics'>('import');
   const { user, role, isAdmin, isTeam } = useAuth();
   const [dashboardName, setDashboardName] = useState('');
+  const [studentNoteReminderCount, setStudentNoteReminderCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -70,6 +71,28 @@ export const Dashboard = () => {
     };
     resolveDashboardName();
   }, [user]);
+
+  useEffect(() => {
+    const loadStudentNoteReminders = async () => {
+      if (!isAdmin) {
+        setStudentNoteReminderCount(0);
+        return;
+      }
+
+      try {
+        const remindersQ = query(
+          collection(db, 'students'),
+          where('noteNeedsReview', '==', true)
+        );
+        const remindersSnap = await getDocs(remindersQ);
+        setStudentNoteReminderCount(remindersSnap.size);
+      } catch (error) {
+        console.error('Error loading student note reminders:', error);
+      }
+    };
+
+    loadStudentNoteReminders();
+  }, [isAdmin, adminTab]);
 
   const handleLogout = async () => {
     try {
@@ -130,6 +153,11 @@ export const Dashboard = () => {
                 onClick={() => setAdminTab('students')}
               >
                 Správa študentov
+                {studentNoteReminderCount > 0 && (
+                  <span className="tab-reminder-badge" title="Nové poznámky od študentov">
+                    {studentNoteReminderCount}
+                  </span>
+                )}
               </button>
               <button
                 className={`tab-btn ${adminTab === 'payments' ? 'active' : ''}`}
@@ -154,7 +182,9 @@ export const Dashboard = () => {
             {adminTab === 'emails' && <AllowedEmails />}
             {adminTab === 'users' && <UsersManagement />}
             {adminTab === 'payments' && <PaymentsManagement />}
-            {adminTab === 'students' && <StudentsManagement />}
+            {adminTab === 'students' && (
+              <StudentsManagement onRemindersChanged={setStudentNoteReminderCount} />
+            )}
             {adminTab === 'communication' && <Communication />}
             {adminTab === 'statistics' && <Statistics />}
           </div>

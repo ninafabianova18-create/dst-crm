@@ -174,7 +174,21 @@ export const UserProfile = () => {
 
     setIsSaving(true);
     try {
-      await updateDoc(doc(db, "students", studentDocId), editedData);
+      const previousNote = String(studentData?.note ?? "").trim();
+      const nextNote = String(editedData?.note ?? "").trim();
+      const noteChanged = previousNote !== nextNote;
+
+      const payload: Record<string, any> = {
+        ...editedData,
+      };
+
+      if (noteChanged) {
+        payload.noteNeedsReview = true;
+        payload.noteUpdatedAt = new Date();
+        payload.noteUpdatedBy = user?.email ?? "";
+      }
+
+      await updateDoc(doc(db, "students", studentDocId), payload);
       setStudentData(editedData);
       setIsEditing(false);
     } catch (error) {
