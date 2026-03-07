@@ -310,8 +310,12 @@ export const Communication: React.FC<CommunicationProps> = ({
         }),
       });
 
+      const contentType = response.headers.get("content-type") || "";
+      const rawBody = await response.text();
+      const isJson = contentType.toLowerCase().includes("application/json");
+      const parsedBody = isJson && rawBody ? JSON.parse(rawBody) : null;
+
       if (response.ok) {
-        await response.json();
         setMessage(`Email úspešně odeslaný ${emails.length} študentom`);
         setMessageType("success");
         setShowEmailModal(false);
@@ -319,14 +323,29 @@ export const Communication: React.FC<CommunicationProps> = ({
         setEmailSubject("");
         setEmailText("");
       } else {
-        const errorData = await response.json();
-        console.error("Backend error:", errorData);
-        setMessage(`Chyba pri odoslaní: ${errorData.error || "Neznáma chyba"}`);
+        const backendError = parsedBody?.error;
+        const htmlReplyHint = rawBody.trim().startsWith("<!DOCTYPE") || rawBody.trim().startsWith("<html");
+
+        console.error("Backend error:", {
+          status: response.status,
+          contentType,
+          body: parsedBody ?? rawBody,
+        });
+
+        if (htmlReplyHint) {
+          setMessage("Chyba pri odoslaní: API endpoint /api/send-mail vrátil HTML namiesto JSON. Skontrolujte, či beží email server a routing /api.");
+        } else {
+          setMessage(`Chyba pri odoslaní: ${backendError || `HTTP ${response.status}`}`);
+        }
         setMessageType("error");
       }
     } catch (err: any) {
       console.error("Mail send error:", err);
-      setMessage(`Chyba pri odoslaní emailu: ${err?.message || "Neznáma chyba"}`);
+      if (err instanceof SyntaxError) {
+        setMessage("Chyba pri odoslaní emailu: API nevrátilo JSON odpoveď. Skontrolujte backend server (/api/send-mail).");
+      } else {
+        setMessage(`Chyba pri odoslaní emailu: ${err?.message || "Neznáma chyba"}`);
+      }
       setMessageType("error");
     } finally {
       setSendingEmail(false);
