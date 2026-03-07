@@ -1,5 +1,6 @@
 [build]
-  command = "if [ -d dst-crm ]; then npm --prefix dst-crm run build && rm -rf dist && cp -r dst-crm/dist dist; else npm run build; fi"
+  base = "dst-crm"
+  command = "npm run build"
   publish = "dist"
 
 [build.environment]
