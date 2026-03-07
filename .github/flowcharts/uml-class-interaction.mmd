@@ -1,0 +1,308 @@
+%% DST CRM — UML Class Interaction Diagram
+%% Paste this into https://mermaid.live to render the diagram
+%%
+%% Legend:
+%%   ──▶  renders / provides / uses
+%%   ..▶  reads / writes to Firestore (dashed)
+%%   <<component>>  React component
+%%   <<context>>    React Context + hook
+%%   <<config>>     Firebase initialisation
+%%   <<Firestore>>  Firestore collection (external data store)
+%%   <<type>>       Shared TypeScript union type
+
+classDiagram
+  direction TB
+
+  %% ── CONFIG ──────────────────────────────────────────────────────────
+  class FirebaseConfig {
+    <<config>>
+    +auth : Auth
+    +db : Firestore
+    +app : FirebaseApp
+    +googleProvider : GoogleAuthProvider
+  }
+
+  %% ── SHARED TYPES ────────────────────────────────────────────────────
+  class UserRole {
+    <<type>>
+    admin
+    team
+    student
+    user
+    null
+  }
+
+  class AdminTab {
+    <<type>>
+    import
+    communication
+    students
+    payments
+    users
+    statistics
+  }
+
+  class MatchStatus {
+    <<type>>
+    matched
+    unmatched
+    ambiguous
+  }
+
+  %% ── AUTH CONTEXT ────────────────────────────────────────────────────
+  class AuthContext {
+    <<context>>
+    +user : User | null
+    +role : UserRole
+    +loading : boolean
+    +isAdmin : boolean
+    +isTeam : boolean
+    +isStudent : boolean
+    +useAuth() AuthContextType
+  }
+
+  %% ── ROUTING ─────────────────────────────────────────────────────────
+  class App {
+    <<component>>
+    +render() JSX
+  }
+
+  class ProtectedRoute {
+    <<component>>
+    +children : ReactNode
+    +requiredRole? : UserRole
+    +render() JSX
+  }
+
+  class Unauthorized {
+    <<component>>
+    +render() JSX
+  }
+
+  %% ── AUTH COMPONENTS ─────────────────────────────────────────────────
+  class Login {
+    <<component>>
+    -mode : login | register
+    -email : string
+    -password : string
+    -displayName : string
+    -loading : boolean
+    -error : string
+    +isEmailAllowed() boolean
+    +normalizeRole() UserRole
+    +handleEmailSignIn() void
+    +handleEmailRegister() void
+    +render() JSX
+  }
+
+  %% ── DASHBOARD (SHELL) ───────────────────────────────────────────────
+  class Dashboard {
+    <<component>>
+    -adminTab : AdminTab
+    -dashboardName : string
+    -studentNoteReminderCount : number
+    -globalCohort : string
+    -globalInstallmentCheckpoint : number
+    -cohortOptions : string[]
+    +handleLogout() void
+    +getCohortFromVS() string
+    +cohortLabel() string
+    +render() JSX
+  }
+
+  %% ── ADMIN FEATURE TABS ──────────────────────────────────────────────
+  class ImportStudents {
+    <<component>>
+    -file : File | null
+    -filePayments : File | null
+    -importing : boolean
+    -importingPayments : boolean
+    -message : string
+    +handleImport() void
+    +handleImportPayments() void
+    +render() JSX
+  }
+
+  class UsersManagement {
+    <<component>>
+    -users : User[]
+    -newUserEmail : string
+    -newUserName : string
+    -newUserRole : UserRole
+    -loading : boolean
+    -message : string
+    +loadUsers() void
+    +handleAddUser() void
+    +handleDeleteUser() void
+    +handleRoleChange() void
+    +render() JSX
+  }
+
+  class StudentsManagement {
+    <<component>>
+    -students : StudentData[]
+    -payments : PaymentInfo[]
+    -selectedCohort? : string
+    -searchQuery : string
+    -loading : boolean
+    +loadAll() void
+    +assignPaymentToStudent() void
+    +handleSaveNote() void
+    +render() JSX
+  }
+
+  class PaymentsManagement {
+    <<component>>
+    -payments : PaymentInfo[]
+    -statusFilter : StatusFilter
+    -searchVS : string
+    -studentResults : StudentShort[]
+    -selectedCohort? : string
+    -autoPairing : boolean
+    +loadPayments() void
+    +assignPaymentToStudent() void
+    +removeAssignment() void
+    +autoPair() void
+    +render() JSX
+  }
+
+  class Communication {
+    <<component>>
+    -students : StudentData[]
+    -payments : PaymentInfo[]
+    -statusFilter : string
+    -selectedCohort? : string
+    -selectedInstallmentCheckpoint : number
+    -overrides : Map
+    +calculatePaymentStatus() string
+    +getExpectedAmount() number
+    +sendBulkEmails() void
+    +render() JSX
+  }
+
+  class Statistics {
+    <<component>>
+    -students : StudentData[]
+    -payments : PaymentInfo[]
+    -tab : overview | finance | students
+    -selectedCohort? : string
+    -selectedInstallmentCheckpoint : number
+    -regionMode : string
+    +calculateFinanceStats() FinanceStats
+    +normalizePeriod() string
+    +render() JSX
+  }
+
+  class UserProfile {
+    <<component>>
+    -studentData : StudentData | null
+    -payments : PaymentInfo[]
+    -isEditing : boolean
+    -editedData : StudentData
+    -isSaving : boolean
+    -studentDocId : string
+    +loadData() void
+    +handleSave() void
+    +computeDeadlines() Date[]
+    +render() JSX
+  }
+
+  %% ── FIRESTORE COLLECTIONS ───────────────────────────────────────────
+  class UsersCollection {
+    <<Firestore>>
+    +uid : string
+    +email : string
+    +displayName : string
+    +photoURL : string
+    +role : UserRole
+    +createdAt : Timestamp
+  }
+
+  class StudentsCollection {
+    <<Firestore>>
+    +name : string
+    +surname : string
+    +mail : string
+    +vs : string
+    +region : string
+    +school : string
+    +amount : string
+    +period : year | half-year | month
+    +iban : string
+    +typeOfPayment : string
+    +note : string
+    +noteNeedsReview : boolean
+    +noteUpdatedAt : Timestamp
+    +importedAt : Timestamp
+  }
+
+  class PaymentsCollection {
+    <<Firestore>>
+    +vs : string
+    +amount : number
+    +date : Timestamp
+    +senderIban : string
+    +senderName : string
+    +message : string
+    +matchedStudentId : string | null
+    +matchStatus : MatchStatus
+  }
+
+  %% ── STRUCTURAL RELATIONSHIPS ────────────────────────────────────────
+
+  App --> AuthContext         : provides context
+  App --> ProtectedRoute      : wraps routes
+  App --> Login               : renders /login
+  App --> Dashboard           : renders /dashboard
+  App --> Unauthorized        : renders /unauthorized
+  App --> FirebaseConfig      : initialises
+
+  AuthContext --> FirebaseConfig    : uses auth + db
+  ProtectedRoute --> AuthContext    : useAuth()
+  Login --> AuthContext             : useAuth()
+  Login --> FirebaseConfig          : uses auth
+
+  Dashboard --> AuthContext         : useAuth()
+  Dashboard --> FirebaseConfig      : uses db
+  Dashboard --> ImportStudents      : renders tab
+  Dashboard --> UsersManagement     : renders tab
+  Dashboard --> StudentsManagement  : renders tab
+  Dashboard --> PaymentsManagement  : renders tab
+  Dashboard --> Communication       : renders tab
+  Dashboard --> Statistics          : renders tab
+  Dashboard --> UserProfile         : renders student role
+
+  ImportStudents --> FirebaseConfig     : uses db
+  UsersManagement --> FirebaseConfig    : uses db
+  StudentsManagement --> FirebaseConfig : uses db
+  PaymentsManagement --> FirebaseConfig : uses db
+  Communication --> FirebaseConfig      : uses db
+  Statistics --> FirebaseConfig         : uses db
+  UserProfile --> FirebaseConfig        : uses db
+  UserProfile --> AuthContext           : useAuth()
+
+  Dashboard --> AdminTab           : uses
+  ProtectedRoute --> UserRole      : uses
+  AuthContext --> UserRole         : uses
+  PaymentsManagement --> MatchStatus : uses
+  StudentsManagement --> MatchStatus : uses
+
+  %% ── FIRESTORE READ / WRITE (dashed) ─────────────────────────────────
+
+  AuthContext ..> UsersCollection        : reads role lookup
+  Login ..> UsersCollection              : reads + writes register
+  Login ..> StudentsCollection           : reads whitelist check
+  UsersManagement ..> UsersCollection    : CRUD
+  ImportStudents ..> StudentsCollection  : batch write
+  ImportStudents ..> PaymentsCollection  : batch write
+  StudentsManagement ..> StudentsCollection : reads + updates
+  StudentsManagement ..> PaymentsCollection : reads
+  PaymentsManagement ..> PaymentsCollection : reads + updates + deletes
+  PaymentsManagement ..> StudentsCollection : reads
+  Communication ..> StudentsCollection   : reads
+  Communication ..> PaymentsCollection   : reads
+  Statistics ..> StudentsCollection      : reads
+  Statistics ..> PaymentsCollection      : reads
+  UserProfile ..> StudentsCollection     : reads + updates
+  UserProfile ..> PaymentsCollection     : reads
+  Dashboard ..> StudentsCollection       : reads cohorts + reminders

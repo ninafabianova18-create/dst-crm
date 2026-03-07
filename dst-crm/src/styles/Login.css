@@ -19,11 +19,20 @@
   width: 100%;
 }
 
-/* prihlasenie -- name*/
-.login-box h1 {
+/* Main product title on login card */
+.login-main-title {
+  color: #313131;
+  margin-bottom: 8px;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+/* Secondary auth section title */
+.login-sub-title {
   color: #4b4a4a;
-  margin-bottom: 30px;
-  font-size: 28px;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 600;
 }
 
 /* Prihlasenie/registracia */

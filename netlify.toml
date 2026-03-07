@@ -1,6 +1,6 @@
 [build]
-  command = "npm --prefix dst-crm run build"
-  publish = "dst-crm/dist"
+  command = "if [ -d dst-crm ]; then npm --prefix dst-crm run build && rm -rf dist && cp -r dst-crm/dist dist; else npm run build; fi"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
