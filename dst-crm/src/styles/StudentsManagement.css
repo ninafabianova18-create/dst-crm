@@ -186,6 +186,17 @@
   border-color: #e64b00;
 }
 
+.btn-danger {
+  border-color: #cd0217;
+  background: #cd0217;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  border-color: #ad0013;
+  background: #ad0013;
+}
+
 .btn-filter-active {
   border-color: #4b4a4a;
   background: #4b4a4a;

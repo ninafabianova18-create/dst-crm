@@ -75,7 +75,7 @@ export const Dashboard = () => {
    
         return;
       }
-      setDashboardName('Používateľ');
+      setDashboardName('Používateľ'); // EN: User
     };
     resolveDashboardName();
   }, [user]);
@@ -132,7 +132,7 @@ export const Dashboard = () => {
   };
 
   const cohortLabel = (cohort: string) => {
-    if (!cohort || cohort === 'all') return 'Všetky ročníky';
+    if (!cohort || cohort === 'all') return 'Všetky ročníky'; // EN: All cohorts
     const cls = cohort.slice(2, 4);
     return `${cohort} (trieda ${Number(cls)}.)`;
   };
@@ -141,17 +141,17 @@ export const Dashboard = () => {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div className="header-content">
-          <h1>Vitajte, {dashboardName || 'Používateľ'}</h1>
+          <h1>Vitajte, {dashboardName || 'Používateľ'} {/* EN: Welcome, ... */}</h1>
           <div className="user-info">
             <span className={`role-badge ${role}`}>
-              {role === 'admin' ? 'Administrátor' : role === 'team' ? 'Team' : 'Študent'}
+              {role === 'admin' ? 'Administrátor' /* EN: Administrator */ : role === 'team' ? 'Team' : 'Študent' /* EN: Student */}
             </span>
             {user?.photoURL && (
               <img src={user.photoURL} alt={user.displayName || 'Profil'} className="user-avatar" />
             )}
           </div>
         </div>
-        <button onClick={handleLogout} className="logout-btn">Odhlásiť sa</button>
+        <button onClick={handleLogout} className="logout-btn">Odhlásiť sa {/* EN: Sign out */}</button>
         
 
 
@@ -162,18 +162,18 @@ export const Dashboard = () => {
         {isAdmin ? (
           <div className="admin-section">
             <div className="global-cohort-row">
-              <span>Globálny ročník:</span>
+              <span>Globálny ročník: {/* EN: Global cohort */}</span>
               <select
                 className="global-cohort-select"
                 value={globalCohort}
                 onChange={(e) => setGlobalCohort(e.target.value)}
               >
-                <option value="all">Všetky ročníky</option>
+                <option value="all">Všetky ročníky {/* EN: All cohorts */}</option>
                 {cohortOptions.map((cohort) => (
                   <option key={cohort} value={cohort}>{cohortLabel(cohort)}</option>
                 ))}
               </select>
-              {globalCohort !== 'all' && <span className="global-cohort-current">Aktívne: {cohortLabel(globalCohort)}</span>}
+              {globalCohort !== 'all' && <span className="global-cohort-current">Aktívne: {cohortLabel(globalCohort)} {/* EN: Active */}</span>}
             </div>
 
             <div className="admin-tabs">
@@ -188,13 +188,13 @@ export const Dashboard = () => {
                 className={`tab-btn ${adminTab === 'users' ? 'active' : ''}`}
                 onClick={() => setAdminTab('users')}
               >
-                Správa užívateľov
+                Správa užívateľov {/* EN: User management */}
               </button>
               <button
                 className={`tab-btn ${adminTab === 'students' ? 'active' : ''}`}
                 onClick={() => setAdminTab('students')}
               >
-                Správa študentov
+                Správa študentov {/* EN: Student management */}
                 {studentNoteReminderCount > 0 && (
                   <span className="tab-reminder-badge" title="Nové poznámky od študentov">
                     {studentNoteReminderCount}
@@ -205,19 +205,19 @@ export const Dashboard = () => {
                 className={`tab-btn ${adminTab === 'payments' ? 'active' : ''}`}
                 onClick={() => setAdminTab('payments')}
               >
-                Správa platieb
+                Správa platieb {/* EN: Payments management */}
               </button>
               <button
                 className={`tab-btn ${adminTab === 'communication' ? 'active' : ''}`}
                 onClick={() => setAdminTab('communication')}
               >
-                Komunikácia a kontrola
+                Komunikácia a kontrola {/* EN: Communication and control */}
               </button>
               <button
                 className={`tab-btn ${adminTab === 'statistics' ? 'active' : ''}`}
                 onClick={() => setAdminTab('statistics')}
               >
-                Štatistiky
+                Štatistiky {/* EN: Statistics */}
               </button>
             </div>
             {adminTab === 'import' && <ImportStudents />}

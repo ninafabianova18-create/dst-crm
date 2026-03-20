@@ -26,7 +26,7 @@ export const Login = () => {
         return true;
       }
 
-      console.log('Kontrolujem email:', normalizedEmail);
+      console.log('Kontrolujem email:', normalizedEmail); // EN: Checking email
 
       // Access is allowed when email exists in students OR in users.
       const [studentsSnapshot, usersSnapshot] = await Promise.all([
@@ -66,10 +66,13 @@ export const Login = () => {
     } catch (error: any) {
       console.error('Error during email sign-in:', error);
       if (error.code === 'auth/user-not-found') {
+        // EN: User not found
         setError('Užívateľ nenájdený');
       } else if (error.code === 'auth/wrong-password') {
+        // EN: Wrong password
         setError('Nesprávne heslo');
       } else {
+        // EN: Error during sign-in
         setError('Chyba pri prihlásení');
       }
     } finally {
@@ -87,6 +90,7 @@ export const Login = () => {
       const allowed = await isEmailAllowed(email);
       
       if (!allowed) {
+        // EN: This email does not have access to the app
         setError('Tento email nemá prístup k aplikácii');
         setLoading(false);
         return;
@@ -120,7 +124,7 @@ export const Login = () => {
       // Denormalized profile snapshot: users collection stores data for role/admin views.
       await setDoc(doc(db, 'users', user.uid), {
         email: normalizedEmail,
-        displayName: displayName || 'Užívateľ',
+        displayName: displayName || 'Užívateľ', // EN: User
         photoURL: '',
         role: roleToSet,
         createdAt: new Date(),
@@ -130,10 +134,13 @@ export const Login = () => {
     } catch (error: any) {
       console.error('Error during registration:', error);
       if (error.code === 'auth/email-already-in-use') {
+        // EN: Email already in use
         setError('Email sa už používa');
       } else if (error.code === 'auth/weak-password') {
+        // EN: Password must have at least 6 characters
         setError('Heslo musí mať aspoň 6 znakov');
       } else {
+        // EN: Error during registration
         setError('Chyba pri registrácii');
       }
     } finally {
@@ -145,7 +152,7 @@ export const Login = () => {
     <div className="login-container">
       <div className="login-box">
         <h1 className="login-main-title">DASATO Finance System</h1>
-        <h2 className="login-sub-title">Prihlásenie</h2>
+        <h2 className="login-sub-title">Prihlásenie {/* EN: Sign in */}</h2>
         
         <div className="mode-tabs">
           <button
@@ -155,7 +162,7 @@ export const Login = () => {
               setError('');
             }}
           >
-            Prihlásenie
+            Prihlásenie {/* EN: Sign in */}
           </button>
           <button
             className={`mode-tab ${mode === 'register' ? 'active' : ''}`}
@@ -164,7 +171,7 @@ export const Login = () => {
               setError('');
             }}
           >
-            Registrácia
+            Registrácia {/* EN: Registration */}
           </button>
         </div>
 
@@ -189,7 +196,7 @@ export const Login = () => {
               />
               {error && <div className="error-message">{error}</div>}
               <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? 'Prihlasuje sa...' : 'Prihlásiť sa'}
+                {loading ? 'Prihlasuje sa...' /* EN: Signing in... */ : 'Prihlásiť sa' /* EN: Sign in */}
               </button>
             </form>
           </>
@@ -221,7 +228,7 @@ export const Login = () => {
               />
               {error && <div className="error-message">{error}</div>}
               <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? 'Registruje sa...' : 'Registrovať sa'}
+                {loading ? 'Registruje sa...' /* EN: Registering... */ : 'Registrovať sa' /* EN: Register */}
               </button>
             </form>
           </>

@@ -7,9 +7,9 @@ export const Unauthorized = () => {
     <div className="unauthorized-container">
       <div className="unauthorized-box">
         <h1>403</h1>
-        <h2>Prístup zamietnutý</h2>
-        <p>Nemáte oprávnenie na prístup k tejto stránke.</p>
-        <Link to="/dashboard" className="back-link">Späť na dashboard</Link>
+        <h2>Prístup zamietnutý {/* EN: Access denied */}</h2>
+        <p>Nemáte oprávnenie na prístup k tejto stránke. {/* EN: You are not authorized to access this page. */}</p>
+        <Link to="/dashboard" className="back-link">Späť na dashboard {/* EN: Back to dashboard */}</Link>
       </div>
     </div>
   );

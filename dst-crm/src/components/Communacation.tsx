@@ -153,7 +153,9 @@ export const Communication: React.FC<CommunicationProps> = ({
       setStudents(cohortStudents);
       setPayments(cohortPayments);
     } catch (err) {
+      // EN: Error while loading
       console.error("Chyba pri načítaní:", err);
+      // EN: Error while loading data
       setMessage("Chyba pri načítaní dát");
       setMessageType("error");
     } finally {
@@ -235,6 +237,7 @@ export const Communication: React.FC<CommunicationProps> = ({
   const saveOverrideToStudent = async (studentId: string) => {
     const val = overrides[studentId];
     if (val === undefined) {
+      // EN: No value set to save
       setMessage("Nie je nastavená žiadna hodnota na uloženie.");
       setMessageType("error");
       return;
@@ -242,11 +245,13 @@ export const Communication: React.FC<CommunicationProps> = ({
     try {
       // updateDoc patches only amount; other document fields remain unchanged.
       await updateDoc(doc(db, "students", studentId), { amount: val });
+      // EN: Expected amount saved for student
       setMessage("Očakávaná suma uložená pre študenta.");
       setMessageType("success");
       loadAll();
     } catch (err) {
       console.error(err);
+      // EN: Error while saving
       setMessage("Chyba pri ukladaní.");
       setMessageType("error");
     }
@@ -273,12 +278,14 @@ export const Communication: React.FC<CommunicationProps> = ({
 
   const sendEmailToSelected = async () => {
     if (selectedStudents.size === 0) {
+      // EN: Select at least one student
       setMessage("Vyberte aspoň jedného študenta");
       setMessageType("error");
       return;
     }
 
     if (!emailSubject.trim() || !emailText.trim()) {
+      // EN: Fill in subject and message
       setMessage("Vyplňte predmet a správu");
       setMessageType("error");
       return;
@@ -293,6 +300,7 @@ export const Communication: React.FC<CommunicationProps> = ({
         .filter(m => m && m.trim());
 
       if (emails.length === 0) {
+        // EN: Selected students do not have an email address
         setMessage("Vybratí študenti nemajú emailovú adresu");
         setMessageType("error");
         setSendingEmail(false);
@@ -316,6 +324,7 @@ export const Communication: React.FC<CommunicationProps> = ({
       const parsedBody = isJson && rawBody ? JSON.parse(rawBody) : null;
 
       if (response.ok) {
+        // EN: Email successfully sent to selected students
         setMessage(`Email úspešně odeslaný ${emails.length} študentom`);
         setMessageType("success");
         setShowEmailModal(false);
@@ -333,8 +342,10 @@ export const Communication: React.FC<CommunicationProps> = ({
         });
 
         if (htmlReplyHint) {
+          // EN: API endpoint returned HTML instead of JSON; check server/routing
           setMessage("Chyba pri odoslaní: API endpoint /api/send-mail vrátil HTML namiesto JSON. Skontrolujte, či beží email server a routing /api.");
         } else {
+          // EN: Sending failed with backend error or HTTP status
           setMessage(`Chyba pri odoslaní: ${backendError || `HTTP ${response.status}`}`);
         }
         setMessageType("error");
@@ -342,8 +353,10 @@ export const Communication: React.FC<CommunicationProps> = ({
     } catch (err: any) {
       console.error("Mail send error:", err);
       if (err instanceof SyntaxError) {
+        // EN: API did not return JSON response; check backend endpoint
         setMessage("Chyba pri odoslaní emailu: API nevrátilo JSON odpoveď. Skontrolujte backend server (/api/send-mail).");
       } else {
+        // EN: Generic email send error
         setMessage(`Chyba pri odoslaní emailu: ${err?.message || "Neznáma chyba"}`);
       }
       setMessageType("error");
@@ -353,21 +366,22 @@ export const Communication: React.FC<CommunicationProps> = ({
   };
 
   if (loading) {
+    // EN: Loading data...
     return <div className="installments-check-container">Načítavam dáta...</div>;
   }
 
   return (
     <div className="installments-check-container">
       <div className="header">
-        <h2>Komunikácia a kontrola</h2>
-        <p>Vyber číslo 1–10 (poradie / počet splátok) a skontroluj očakávané vs. zaplatené sumy</p>
+        <h2>Komunikácia a kontrola {/* EN: Communication and control */}</h2>
+        <p>Vyber číslo 1–10 (poradie / počet splátok) a skontroluj očakávané vs. zaplatené sumy {/* EN: Select number 1-10 (installment order/count) and check expected vs paid amounts */}</p>
       </div>
 
       {message && <div className={`message message-${messageType}`}>{message}</div>}
 
       <div className="controls">
         <label>
-          <p>Poradie / počet splátok (1–10):</p>
+          <p>Poradie / počet splátok (1–10): {/* EN: Installment order / count (1-10) */}</p>
           <input
             type="number"
             min={1}
@@ -379,21 +393,21 @@ export const Communication: React.FC<CommunicationProps> = ({
 
         {/* FILTER BY COMPUTED STATUS */}
         <label>
-          <p>Filter podľa stavu:</p>
+          <p>Filter podľa stavu: {/* EN: Filter by status */}</p>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
             style={{ marginLeft: 8, padding: "6px 8px", borderRadius: 6 }}
           >
-            <option value="all">Všetky</option>
-            <option value="paid">Plne</option>
-            <option value="unpaid">Nedoplatok</option>
-            <option value="overpaid">Preplatok</option>
+            <option value="all">Všetky {/* EN: All */}</option>
+            <option value="paid">Plne {/* EN: Fully paid */}</option>
+            <option value="unpaid">Nedoplatok {/* EN: Underpaid */}</option>
+            <option value="overpaid">Preplatok {/* EN: Overpaid */}</option>
           </select>
         </label>
 
         <button style={{ marginLeft: 12 }} onClick={loadAll}>
-          Obnoviť dáta
+          Obnoviť dáta {/* EN: Refresh data */}
         </button>
 
         <button
@@ -402,7 +416,7 @@ export const Communication: React.FC<CommunicationProps> = ({
           onClick={() => setShowEmailModal(true)}
           disabled={filteredStudents.length === 0}
         >
-          Odoslať email ({selectedStudents.size} vybrato)
+          Odoslať email ({selectedStudents.size} vybrato) {/* EN: Send email (... selected) */}
         </button>
       </div>
 
@@ -411,6 +425,7 @@ export const Communication: React.FC<CommunicationProps> = ({
           <thead>
             <tr>
               <th>
+                {/* EN: Select all */}
                 <input
                   type="checkbox"
                   checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
@@ -418,14 +433,14 @@ export const Communication: React.FC<CommunicationProps> = ({
                   title="Vybrať všetkých"
                 />
               </th>
-              <th>Študent</th>
+              <th>Študent {/* EN: Student */}</th>
               <th>VS</th>
-              <th>Period</th>
-              <th>Očakávané</th>
-              <th>Zaplatené</th>
-              <th>Rozdiel</th>
-              <th>Stav</th>
-              <th>Upraviť očakávané</th>
+              <th>Period {/* EN: Period */}</th>
+              <th>Očakávané {/* EN: Expected */}</th>
+              <th>Zaplatené {/* EN: Paid */}</th>
+              <th>Rozdiel {/* EN: Difference */}</th>
+              <th>Stav {/* EN: Status */}</th>
+              <th>Upraviť očakávané {/* EN: Edit expected amount */}</th>
             </tr>
           </thead>
           <tbody>
@@ -457,14 +472,16 @@ export const Communication: React.FC<CommunicationProps> = ({
                   <td>
                     <span className={`status-badge ${status}`}>
                       {status === "paid"
-                        ? "Plne"
+                        ? "Plne" // EN: Fully paid
                         : status === "unpaid"
-                        ? "Nedoplatok"
-                        : "Preplatok"}
+                        ? "Nedoplatok" // EN: Underpaid
+                        : "Preplatok" // EN: Overpaid
+                      }
                     </span>
                   </td>
                   <td>
                     <div className="override-row">
+                      {/* EN: Override the base expected amount (per installment) */}
                       <input
                         type="number"
                         step="1"
@@ -472,7 +489,7 @@ export const Communication: React.FC<CommunicationProps> = ({
                         onChange={(e) => setOverrideForStudent(s.id, Number(e.target.value || 0))}
                         title="Prepíše základnú očakávanú sumu (per installment)"
                       />
-                      <button onClick={() => saveOverrideToStudent(s.id)}>Uložiť</button>
+                      <button onClick={() => saveOverrideToStudent(s.id)}>Uložiť {/* EN: Save */}</button>
                     </div>
                   </td>
                 </tr>
@@ -481,7 +498,7 @@ export const Communication: React.FC<CommunicationProps> = ({
             {filteredStudents.length === 0 && (
               <tr>
                 <td colSpan={8} style={{ textAlign: "center", padding: 16 }}>
-                  Žiadni študenti pre aktuálny filter stavu.
+                  Žiadni študenti pre aktuálny filter stavu. {/* EN: No students for the current status filter. */}
                 </td>
               </tr>
             )}
@@ -493,13 +510,14 @@ export const Communication: React.FC<CommunicationProps> = ({
       {showEmailModal && (
         <div className="email-modal-overlay">
           <div className="email-modal">
-            <h3 className="email-modal-title">Odoslať email</h3>
+            <h3 className="email-modal-title">Odoslať email {/* EN: Send email */}</h3>
             <p className="email-modal-count">
-              Vybratí študenti: <strong>{selectedStudents.size}</strong>
+              Vybratí študenti: <strong>{selectedStudents.size}</strong> {/* EN: Selected students */}
             </p>
 
             <div className="email-field">
-              <label className="email-label">Predmet:</label>
+              <label className="email-label">Predmet: {/* EN: Subject */}</label>
+              {/* EN: For example: Payment reminder */}
               <input
                 type="text"
                 value={emailSubject}
@@ -510,7 +528,8 @@ export const Communication: React.FC<CommunicationProps> = ({
             </div>
 
             <div className="email-field">
-              <label className="email-label">Správa:</label>
+              <label className="email-label">Správa: {/* EN: Message */}</label>
+              {/* EN: Write message... */}
               <textarea
                 value={emailText}
                 onChange={(e) => setEmailText(e.target.value)}
@@ -525,14 +544,14 @@ export const Communication: React.FC<CommunicationProps> = ({
                 onClick={() => setShowEmailModal(false)}
                 className="email-modal-btn"
               >
-                Zrušiť
+                Zrušiť {/* EN: Cancel */}
               </button>
               <button
                 onClick={sendEmailToSelected}
                 disabled={sendingEmail}
                 className="email-modal-btn email-modal-btn-primary"
               >
-                {sendingEmail ? "Odosielam..." : "Odoslať email"}
+                {sendingEmail ? "Odosielam..." /* EN: Sending... */ : "Odoslať email" /* EN: Send email */}
               </button>
             </div>
           </div>

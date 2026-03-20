@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, orderBy, query, updateDoc, doc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where, writeBatch } from "firebase/firestore";
 import { db } from "../config/firebase";
 import "../styles/StudentsManagement.css";
 
@@ -86,6 +86,8 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
   const [editModeById, setEditModeById] = useState<Record<string, boolean>>({});
   const [draftById, setDraftById] = useState<Record<string, Partial<StudentData>>>({});
   const [savingById, setSavingById] = useState<Record<string, boolean>>({});
+  const [deletingById, setDeletingById] = useState<Record<string, boolean>>({});
+  const [deletingCohort, setDeletingCohort] = useState(false);
 
   useEffect(() => {
     // One-shot initial load bez realtime listenerov.
@@ -179,6 +181,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
         return next;
       });
     } catch (err) {
+      // EN: Error while loading students/payments
       console.error("Chyba pri načítaní študentov/platieb:", err);
       setMessage("Chyba pri načítaní študentov/platieb");
       setMessageType("error");
@@ -196,9 +199,117 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
       });
       loadAll();
     } catch (err) {
+      // EN: Error while matching payment
       console.error("Chyba pri párovaní:", err);
+      // EN: Payment matching error
       setMessage("Chyba pri párovaní platby");
       setMessageType("error");
+    }
+  };
+
+  const runBatchInChunks = async <T,>(
+    items: T[],
+    apply: (batch: ReturnType<typeof writeBatch>, item: T) => void,
+    chunkSize = 450
+  ) => {
+    for (let i = 0; i < items.length; i += chunkSize) {
+      const chunk = items.slice(i, i + chunkSize);
+      const batch = writeBatch(db);
+      chunk.forEach((item) => apply(batch, item));
+      await batch.commit();
+    }
+  };
+
+  const getPaymentsForStudent = async (student: StudentData) => {
+    const studentId = String(student.id);
+    const matchedByIdSnap = await getDocs(
+      query(collection(db, "payments"), where("matchedStudentId", "==", studentId))
+    );
+    return matchedByIdSnap.docs;
+  };
+
+  const deleteStudent = async (student: StudentData) => {
+    const fullName = `${student.name ?? ""} ${student.surname ?? ""}`.trim() || "bez mena";
+    // EN: Are you sure you want to delete this student? Only matched payments will be deleted. This action cannot be undone.
+    const confirmed = window.confirm(
+      `Naozaj chcete vymazať študenta ${fullName}? Vymažú sa iba priradené platby (matched). Táto akcia sa nedá vrátiť späť.`
+    );
+    if (!confirmed) return;
+
+    setDeletingById((prev) => ({ ...prev, [student.id]: true }));
+    setMessage("");
+
+    try {
+      const paymentDocs = await getPaymentsForStudent(student);
+      await runBatchInChunks(paymentDocs, (batch, paymentDoc) => {
+        batch.delete(doc(db, "payments", paymentDoc.id));
+      });
+
+      await deleteDoc(doc(db, "students", student.id));
+
+      setMessage(`Študent ${fullName} bol vymazaný spolu s platbami (${paymentDocs.length}).`);
+      setMessageType("success");
+      await loadAll();
+    } catch (err) {
+      // EN: Error while deleting student
+      console.error("Chyba pri mazaní študenta:", err);
+      setMessage("Chyba pri mazaní študenta");
+      setMessageType("error");
+    } finally {
+      setDeletingById((prev) => ({ ...prev, [student.id]: false }));
+    }
+  };
+
+  const deleteSelectedCohort = async () => {
+    if (selectedCohort === "all") return;
+
+    const cohortStudents = students.filter((s) => getCohortFromVS(s.vs) === selectedCohort);
+    if (cohortStudents.length === 0) {
+      // EN: No students to delete in this cohort
+      setMessage("V tomto ročníku nie sú žiadni študenti na vymazanie.");
+      setMessageType("error");
+      return;
+    }
+
+    // EN: Are you sure you want to delete the whole cohort? Only matched payments will be deleted. This action cannot be undone.
+    const confirmed = window.confirm(
+      `Naozaj chcete vymazať celý ročník ${selectedCohort}? Počet študentov: ${cohortStudents.length}. Vymažú sa iba priradené platby (matched). Táto akcia sa nedá vrátiť späť.`
+    );
+    if (!confirmed) return;
+
+    setDeletingCohort(true);
+    setMessage("");
+
+    try {
+      const studentIds = new Set(cohortStudents.map((s) => s.id));
+
+      const allPaymentsSnap = await getDocs(collection(db, "payments"));
+      const relatedPayments = allPaymentsSnap.docs.filter((p) => {
+        const data = p.data() as any;
+        const matchedStudentId = data.matchedStudentId ? String(data.matchedStudentId) : "";
+        return studentIds.has(matchedStudentId);
+      });
+
+      await runBatchInChunks(relatedPayments, (batch, paymentDoc) => {
+        batch.delete(doc(db, "payments", paymentDoc.id));
+      });
+
+      await runBatchInChunks(cohortStudents, (batch, s) => {
+        batch.delete(doc(db, "students", s.id));
+      });
+
+      setMessage(
+        `Ročník ${selectedCohort} bol vymazaný (študenti: ${cohortStudents.length}, platby: ${relatedPayments.length}).`
+      );
+      setMessageType("success");
+      await loadAll();
+    } catch (err) {
+      // EN: Error while deleting cohort
+      console.error("Chyba pri mazaní ročníka:", err);
+      setMessage("Chyba pri mazaní ročníka");
+      setMessageType("error");
+    } finally {
+      setDeletingCohort(false);
     }
   };
 
@@ -301,6 +412,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
       setEditModeById((prev) => ({ ...prev, [studentId]: false }));
       await loadAll();
     } catch (err) {
+      // EN: Error while saving student
       console.error("Chyba pri ukladaní študenta:", err);
       setMessage("Chyba pri ukladaní študenta");
       setMessageType("error");
@@ -319,6 +431,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
       setMessageType("success");
       await loadAll();
     } catch (err) {
+      // EN: Error while marking note as reviewed
       console.error("Chyba pri označení poznámky:", err);
       setMessage("Chyba pri označení poznámky");
       setMessageType("error");
@@ -342,6 +455,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
       setMessageType("success");
       await loadAll();
     } catch (err) {
+      // EN: Error while marking all notes as reviewed
       console.error("Chyba pri hromadnom označení poznámok:", err);
       setMessage("Chyba pri hromadnom označení poznámok");
       setMessageType("error");
@@ -351,14 +465,15 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
   const pendingNoteReminders = students.filter((s) => s.noteNeedsReview).length;
 
   if (loading) {
+    // EN: Loading students...
     return <div className="students-management-container">Načítavam študentov...</div>;
   }
 
   return (
     <div className="students-management-container">
       <div className="students-management-header">
-        <h2>Správa študentov</h2>
-        <p>Prehľad všetkých študentov, profil a platby</p>
+        <h2>Správa študentov {/* EN: Student management */}</h2>
+        <p>Prehľad všetkých študentov, profil a platby {/* EN: Overview of all students, profile, and payments */}</p>
       </div>
 
       {message && <div className={`message message-${messageType}`}>{message}</div>}
@@ -366,16 +481,17 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
       {pendingNoteReminders > 0 && (
         <div className="note-reminder-banner">
           <span>
-            Nové študentské poznámky na kontrolu: <b>{pendingNoteReminders}</b>
+            Nové študentské poznámky na kontrolu: <b>{pendingNoteReminders}</b> {/* EN: New student notes to review */}
           </span>
           <button className="btn btn-warning" onClick={markAllNotesAsReviewed}>
-            Označiť všetko ako skontrolované
+            Označiť všetko ako skontrolované {/* EN: Mark all as reviewed */}
           </button>
         </div>
       )}
 
       <div className="students-card">
         <div className="students-toolbar">
+          {/* EN: Search (name, surname, email, school, VS)... */}
           <input
             className="students-search"
             placeholder="Hľadať (meno, priezvisko, mail, škola, VS)..."
@@ -389,14 +505,14 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
               onClick={() => setNoteReminderFilter("pending")}
               type="button"
             >
-              Nové správy
+              Nové správy {/* EN: New messages */}
             </button>
             <button
               className={`btn ${noteReminderFilter === "all" ? "btn-filter-active" : ""}`}
               onClick={() => setNoteReminderFilter("all")}
               type="button"
             >
-              Zobraziť všetkých
+              Zobraziť všetkých {/* EN: Show all */}
             </button>
           </div>
 
@@ -406,30 +522,40 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
             onChange={(e) => setNoteReminderFilter(e.target.value as "all" | "pending")}
             title="Filter poznámok"
           >
-            <option value="all">Všetci študenti</option>
-            <option value="pending">Len nové poznámky</option>
+            <option value="all">Všetci študenti {/* EN: All students */}</option>
+            <option value="pending">Len nové poznámky {/* EN: Only new notes */}</option>
           </select>
 
           <span className="students-count">
-            Zobrazené: <b>{filteredStudents.length}</b> / {students.length}
+            Zobrazené: <b>{filteredStudents.length}</b> / {students.length} {/* EN: Displayed */}
           </span>
+
+          <button
+            className="btn btn-danger"
+            type="button"
+            onClick={deleteSelectedCohort}
+            disabled={selectedCohort === "all" || deletingCohort || students.length === 0}
+            title={selectedCohort === "all" ? "Najprv vyberte konkrétny ročník v Dashboardi" : "Vymazať celý aktuálne zvolený ročník"}
+          >
+            {deletingCohort ? "Mažem ročník..." /* EN: Deleting cohort... */ : "Vymazať ročník" /* EN: Delete cohort */}
+          </button>
         </div>
 
         {filteredStudents.length === 0 ? (
-          <p className="empty-message">Žiadni študenti pre dané hľadanie</p>
+          <p className="empty-message">Žiadni študenti pre dané hľadanie {/* EN: No students for this search */}</p>
         ) : (
           <div className="students-table-wrapper">
             <table className="students-table">
               <thead>
                 <tr>
-                  <th>Meno</th>
+                  <th>Meno {/* EN: Name */}</th>
                   <th>Mail</th>
-                  <th>Škola</th>
-                  <th>Región</th>
-                  <th>Poznámka</th>
+                  <th>Škola {/* EN: School */}</th>
+                  <th>Región {/* EN: Region */}</th>
+                  <th>Poznámka {/* EN: Note */}</th>
                   <th>VS</th>
-                  <th>Platby</th>
-                  <th>Akcia</th>
+                  <th>Platby {/* EN: Payments */}</th>
+                  <th>Akcia {/* EN: Action */}</th>
                 </tr>
               </thead>
 
@@ -443,6 +569,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
                   const isEditing = !!editModeById[s.id];
                   const draft = draftById[s.id] ?? {};
                   const isSaving = !!savingById[s.id];
+                  const isDeleting = !!deletingById[s.id];
 
                   return (
                     <React.Fragment key={s.id}>
@@ -482,6 +609,15 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
                             title={!s.vs ? "Študent nemá VS" : ""}
                           >
                             {isPaymentsOpen ? "Skryť platby" : "Platby"}
+                          </button>
+
+                          <button
+                            className="btn btn-danger"
+                            onClick={() => deleteStudent(s)}
+                            disabled={isDeleting}
+                            title="Vymazať tohto študenta"
+                          >
+                            {isDeleting ? "Mažem..." : "Vymazať"}
                           </button>
                         </td>
                       </tr>
@@ -529,7 +665,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
                                   gap: 12,
                                 }}
                               >
-                                {/* MENO */}
+                                {/* NAME */}
                                 <div>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>Meno</div>
                                   {isEditing ? (
@@ -543,7 +679,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
                                   )}
                                 </div>
 
-                                {/* PRIEZVISKO */}
+                                {/*  SURNAME */}
                                 <div>
                                   <div style={{ fontSize: 12, opacity: 0.8 }}>Priezvisko</div>
                                   {isEditing ? (
@@ -698,7 +834,7 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
                                   )}
                                 </div>
 
-                                {/* BONUS: Show "other" fields (read-only) so existing doc fields are visible */}
+                                {/* Show "other" fields (read-only) so existing doc fields are visible */}
                                 {!isEditing && (
                                   <div style={{ gridColumn: "1 / -1", marginTop: 8, opacity: 0.9 }}>
                                     <details>

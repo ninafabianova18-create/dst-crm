@@ -135,7 +135,7 @@ export const UserProfile = () => {
           );
           
           console.log("Matched payments count:", matchedPayments.length);
-          console.log("Payments data na zobrazenie:", matchedPayments);
+          console.log("Payments data na zobrazenie:", matchedPayments); // EN: Payments data to display
           setPayments(matchedPayments);
         } catch (queryError: any) {
           console.error("PAYMENTS QUERY ERROR:", queryError);
@@ -193,6 +193,7 @@ export const UserProfile = () => {
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving profile data:", error);
+      // EN: Error while saving data
       alert("Chyba pri uložení údajov");
     } finally {
       setIsSaving(false);
@@ -205,10 +206,12 @@ export const UserProfile = () => {
   };
 
   if (loading) {
+    // EN: Loading data...
     return <div className="loading">Načítavanie údajov...</div>;
   }
 
   if (!studentData) {
+    // EN: Student record not found
     return <div className="error">Študentský záznam nenájdený</div>;
   }
 
@@ -319,6 +322,7 @@ export const UserProfile = () => {
 
     const sep1 = makeDateLocal(schoolYearStart, 8, 1);
     if (today < sep1) {
+      // EN: You do not have a payment deadline yet
       return "Ešte nemáš deadline na platbu";
     }
 
@@ -326,8 +330,10 @@ export const UserProfile = () => {
 
     if (!nextByDate) {
       if (unpaidAmount > 0) {
+        // EN: Please pay all unpaid payments as soon as possible
         return "Uhraď prosím všetky neuhradené platby čo najskôr";
       }
+      // EN: Yay, everything is paid
       return "Jupííí, všetko uhradené";
     }
 
@@ -346,15 +352,15 @@ export const UserProfile = () => {
             <div className="progress-wrap">
               <div className="progress-meta">
                 <div className="progress-row">
-                  <span>Zaplatené</span>
+                    <span>Zaplatené {/* EN: Paid */}</span>
                   <b>{paidSoFar.toFixed(0)} €</b>
                 </div>
                 <div className="progress-row">
-                  <span>Očakávané</span>
+                    <span>Očakávané {/* EN: Expected */}</span>
                   <b>{targetTotal.toFixed(0)} €</b>
                 </div>
                 <div className="progress-row progress-row-percent">
-                  <span>Splnené</span>
+                    <span>Splnené {/* EN: Completed */}</span>
                   <b>{progressPercentDisplay.toFixed(0)}%</b>
                 </div>
               </div>
@@ -369,7 +375,7 @@ export const UserProfile = () => {
               </div>
 
               <div className="progress-deadline">
-                <span className="field-label">Najbližší deadline</span>
+                <span className="field-label">Najbližší deadline {/* EN: Nearest deadline */}</span>
                 <span className="field-value">
                   {getNextPaymentDeadlineText(
                     studentData?.period,
@@ -385,11 +391,11 @@ export const UserProfile = () => {
         {/* PROFILE CARD 1 editable*/}
         <section className="profile-card">
           <div className="card-head">
-            <h3 className="card-title">Osobné údaje</h3>
+            <h3 className="card-title">Osobné údaje {/* EN: Personal details */}</h3>
 
             {!isEditing && (
               <button className="edit-btn" onClick={() => setIsEditing(true)}>
-                Upraviť
+                Upraviť {/* EN: Edit */}
               </button>
             )}
           </div>
@@ -397,7 +403,8 @@ export const UserProfile = () => {
           {isEditing ? (
             <form className="profile-form">
               <div className="form-group">
-                <label htmlFor="name">Meno</label>
+                <label htmlFor="name">Meno {/* EN: Name */}</label>
+                {/* EN: Your name */}
                 <input
                   id="name"
                   type="text"
@@ -408,7 +415,8 @@ export const UserProfile = () => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="surname">Priezvisko</label>
+                <label htmlFor="surname">Priezvisko {/* EN: Surname */}</label>
+                {/* EN: Your surname */}
                 <input
                   id="surname"
                   type="text"
@@ -419,7 +427,8 @@ export const UserProfile = () => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="region">Región</label>
+                <label htmlFor="region">Región {/* EN: Region */}</label>
+                {/* EN: Your region */}
                 <input
                   id="region"
                   type="text"
@@ -430,7 +439,8 @@ export const UserProfile = () => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="school">Škola</label>
+                <label htmlFor="school">Škola {/* EN: School */}</label>
+                {/* EN: Your school */}
                 <input
                   id="school"
                   type="text"
@@ -453,7 +463,8 @@ export const UserProfile = () => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="telephoneNumber">Telefónne číslo</label>
+                <label htmlFor="telephoneNumber">Telefónne číslo {/* EN: Phone number */}</label>
+                {/* EN: Your phone number */}
                 <input
                   id="telephoneNumber"
                   type="tel"
@@ -464,7 +475,7 @@ export const UserProfile = () => {
                 />
               </div>
               <div className="form-group form-group-full">
-                <label htmlFor="note">Poznámka</label>
+                <label htmlFor="note">Poznámka {/* EN: Note */}</label>
                 <textarea
                   id="note"
                   name="note"
@@ -481,7 +492,7 @@ export const UserProfile = () => {
                   onClick={handleSave}
                   disabled={isSaving}
                 >
-                  {isSaving ? "Ukladám..." : "Uložiť"}
+                  {isSaving ? "Ukladám..." /* EN: Saving... */ : "Uložiť" /* EN: Save */}
                 </button>
                 <button
                   type="button"
@@ -489,30 +500,30 @@ export const UserProfile = () => {
                   onClick={handleCancel}
                   disabled={isSaving}
                 >
-                  Zrušiť
+                  Zrušiť {/* EN: Cancel */}
                 </button>
               </div>
             </form>
           ) : (
             <div className="profile-view">
               <div className="profile-field">
-                <span className="field-label">Meno:</span>
+                <span className="field-label">Meno: {/* EN: Name */}</span>
                 <span className="field-value">{studentData?.name || "-"}</span>
               </div>
               <div className="profile-field">
-                <span className="field-label">Priezvisko:</span>
+                <span className="field-label">Priezvisko: {/* EN: Surname */}</span>
                 <span className="field-value">
                   {studentData?.surname || "-"}
                 </span>
               </div>
               <div className="profile-field">
-                <span className="field-label">Región:</span>
+                <span className="field-label">Región: {/* EN: Region */}</span>
                 <span className="field-value">
                   {studentData?.region || "-"}
                 </span>
               </div>
               <div className="profile-field">
-                <span className="field-label">Škola:</span>
+                <span className="field-label">Škola: {/* EN: School */}</span>
                 <span className="field-value">
                   {studentData?.school || "-"}
                 </span>
@@ -522,13 +533,13 @@ export const UserProfile = () => {
                 <span className="field-value">{studentData?.mail || "-"}</span>
               </div>
               <div className="profile-field">
-                <span className="field-label">Telefónne číslo:</span>
+                <span className="field-label">Telefónne číslo: {/* EN: Phone number */}</span>
                 <span className="field-value">
                   {studentData?.telephoneNumber || "-"}
                 </span>
               </div>
               <div className="profile-field profile-field-full">
-                <span className="field-label">Poznámka:</span>
+                <span className="field-label">Poznámka: {/* EN: Note */}</span>
                 <span className="field-value">{studentData?.note || "-"}</span>
               </div>
             </div>
@@ -538,7 +549,7 @@ export const UserProfile = () => {
         {/* PROFILE CARD 2 is NOT editable*/}
         <section className="profile-card profile-card-secondary">
           <div className="card-head">
-            <h3 className="card-title">Členské info</h3>
+            <h3 className="card-title">Členské info {/* EN: Membership info */}</h3>
           </div>
 
           <div className="profile-view">
@@ -550,17 +561,17 @@ export const UserProfile = () => {
             </div>
 
             <div className="profile-field">
-              <span className="field-label">Obdobie</span>
+              <span className="field-label">Obdobie {/* EN: Period */}</span>
               <span className="field-value">{studentData?.period || "-"}</span>
             </div>
 
             <div className="profile-field">
-              <span className="field-label">Suma</span>
+              <span className="field-label">Suma {/* EN: Amount */}</span>
               <span className="field-value">{studentData?.amount || "-"}</span>
             </div>
 
             <div className="profile-field">
-              <span className="field-label">Variabilný symbol</span>
+              <span className="field-label">Variabilný symbol {/* EN: Variable symbol */}</span>
               <span className="field-value mono">{studentData?.vs || "-"}</span>
             </div>
 
@@ -576,12 +587,12 @@ export const UserProfile = () => {
 
         <section className="profile-card profile-card-payments">
           <div className="card-head">
-            <h3 className="card-title">Platby</h3>
+            <h3 className="card-title">Platby {/* EN: Payments */}</h3>
           </div>
 
           {payments.length === 0 ? (
             <div className="profile-field">
-              <span className="field-value">Žiadne priradené platby</span>
+              <span className="field-value">Žiadne priradené platby {/* EN: No assigned payments */}</span>
             </div>
           ) : (
             <div className="payments-table-wrap">

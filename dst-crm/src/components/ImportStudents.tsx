@@ -64,6 +64,7 @@ export const ImportStudents = () => {
   const handleImport = async () => {
     // Guard clause pattern: exit early when input is invalid.
     if (!file) {
+      // EN: Select JSON file
       setMessage('Vyberte JSON súbor');
       setMessageType('error');
       return;
@@ -77,6 +78,7 @@ export const ImportStudents = () => {
       const students: StudentRecord[] = JSON.parse(text);
 console.log("1");
       if (!Array.isArray(students)) {
+        // EN: JSON must contain an array of students
         throw new Error('JSON musí obsahovať pole študentov');
       }
       console.log("2");
@@ -111,17 +113,21 @@ console.log("1");
 
           successCount++;
         } catch (error) {
+          // EN: Error importing student
           console.error('Chyba pri importovaní študenta:', student.mail, error);
           errorCount++;
         }
       }
 
+      // EN: Successfully imported: X, Errors: Y
       setMessage(`Úspešne importovaných: ${successCount}, Chyby: ${errorCount}`);
       setMessageType('success');
       setFile(null);
       (document.getElementById('file-input') as HTMLInputElement).value = '';
     } catch (error) {
+      // EN: Error while parsing JSON
       console.error('Chyba pri parsovaní JSON:', error);
+      // EN: Error reading JSON file. Check format.
       setMessage('Chyba pri čítaní JSON súboru. Skontrolujte formát.');
       setMessageType('error');
     } finally {
@@ -132,6 +138,7 @@ console.log("1");
     const handleImportPayments = async () => {
 
       if (!filePayments) {
+      // EN: Select JSON file
       setMessage('Vyberte JSON súbor');
       setMessageType('error');
       return;
@@ -145,6 +152,7 @@ console.log("1");
       const payments: PaymentInfo[] = JSON.parse(text);
 
       if (!Array.isArray(payments)) {
+        // EN: JSON must contain an array of payments
         throw new Error('JSON musí obsahovať pole platieb');
       }
 
@@ -167,17 +175,21 @@ console.log("1");
 
           successCount++;
         } catch (error) {
+            // EN: Error importing payment
             console.error('Chyba pri importovaní platby:', payment.vs, error);
           errorCount++;
         }
       }
 
+      // EN: Successfully imported: X, Errors: Y
       setMessagePayments(`Úspešne importovaných: ${successCount}, Chyby: ${errorCount}`);
       setMessageTypePayments('successPayments');
       setFilePayments(null);
       (document.getElementById('file-input-payments') as HTMLInputElement).value = '';
     } catch (error) {
+      // EN: Error while parsing JSON
         console.error('Chyba pri parsovaní JSON:', error);
+      // EN: Error reading JSON file. Check format.
         setMessagePayments('Chyba pri čítaní JSON súboru. Skontrolujte formát.');
         setMessageTypePayments('errorPayments');
     } finally {
@@ -190,7 +202,7 @@ console.log("1");
      
       <div className="import-header">
         <h2>Import</h2>
-        <p>Nahrajte JSON súbor </p>
+        <p>Nahrajte JSON súbor {/* EN: Upload JSON file */}</p>
       </div>
       
 
@@ -200,7 +212,7 @@ console.log("1");
 
           <div className="file-input-wrapper">
             <label htmlFor="file-input" className="file-input-label">
-                JSON súbor študentov:
+                JSON súbor študentov: {/* EN: Students JSON file */}
             </label>
         
             <input
@@ -211,12 +223,12 @@ console.log("1");
               className="file-input"
               />
             
-            <span className="file-name">{file?.name || 'Žiadny súbor nie je vybraný'}</span>
+            <span className="file-name">{file?.name || 'Žiadny súbor nie je vybraný' /* EN: No file selected */}</span>
             
             </div>
 
             <div className="format-info">
-              <h3>Formát JSON súboru:</h3>
+              <h3>Formát JSON súboru: {/* EN: JSON file format */}</h3>
               <pre>{`[
                       {
     "name": "Meno",
@@ -240,7 +252,7 @@ console.log("1");
               onClick={handleImport}
               disabled={!file || importing}
             >
-              {importing ? 'Importujem...' : 'Importovať'}
+              {importing ? 'Importujem...' /* EN: Importing... */ : 'Importovať' /* EN: Import */}
             </button>
 
             {message && (
@@ -255,7 +267,7 @@ console.log("1");
           <div className="import-card">
             <div className="file-input-wrapper">
               <label htmlFor="file-input-payments" className="file-input-label">
-                JSON súbor platieb:
+                JSON súbor platieb: {/* EN: Payments JSON file */}
               </label>
               <input
                 id="file-input-payments"
@@ -264,11 +276,11 @@ console.log("1");
                 onChange={handleFilePaymentsChange}
                 className="file-input"
               />
-              <span className="file-name">{filePayments?.name || 'Žiadny súbor nie je vybraný'}</span>
+              <span className="file-name">{filePayments?.name || 'Žiadny súbor nie je vybraný' /* EN: No file selected */}</span>
             </div>
 
             <div className="format-info">
-              <h3>Formát JSON súboru:</h3>
+              <h3>Formát JSON súboru: {/* EN: JSON file format */}</h3>
               <pre>{`[
                       {
       "date": "Dátum platby",
@@ -287,7 +299,7 @@ console.log("1");
               onClick={handleImportPayments}
               disabled={!filePayments || importingPayments}
             >
-              {importingPayments ? 'Importujem...' : 'Importovať'}
+              {importingPayments ? 'Importujem...' /* EN: Importing... */ : 'Importovať' /* EN: Import */}
             </button>
 
             {messagePayments && (

@@ -92,7 +92,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
   const normalizeRegion = (rawValue: string) => {
     // Data-normalization pattern: map various region formats to one canonical code.
     const raw = (rawValue ?? '').trim();
-    if (!raw) return 'Neznámy kraj';
+    if (!raw) return 'Neznámy kraj'; // EN: Unknown region
 
     const upper = raw.toUpperCase();
     const lettersOnly = upper.replace(/[^A-Z]/g, '');
@@ -156,6 +156,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
       setStudents(studentsList);
       setPayments(paymentsList);
     } catch (err) {
+      // EN: Error while loading statistics
       console.error("Chyba pri načítaní štatistík:", err);
     } finally {
       setLoading(false);
@@ -319,6 +320,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
   const studentsStats = calculateStudentStats(filteredStudents);
 
   if (loading) {
+    // EN: Loading statistics...
     return <div className="statistics-container">Načítavam štatistiky...</div>;
   }
 
@@ -332,19 +334,19 @@ export const Statistics: React.FC<StatisticsProps> = ({
   return (
     <div className="statistics-container">
       <div className="statistics-header">
-        <h2>Štatistiky</h2>
-        <p>Prehľad platieb a finančných štatistík</p>
+        <h2>Štatistiky {/* EN: Statistics */}</h2>
+        <p>Prehľad platieb a finančných štatistík {/* EN: Overview of payments and financial statistics */}</p>
       </div>
 
       <div className="cohort-filter-row">
-        <label htmlFor="cohort-select">Ročník podľa VS:</label>
+        <label htmlFor="cohort-select">Ročník podľa VS: {/* EN: Cohort by VS */}</label>
         <select
           id="cohort-select"
           value={activeCohort}
           onChange={(e) => setActiveCohort(e.target.value)}
           className="cohort-select"
         >
-          <option value="all">Všetky ročníky</option>
+          <option value="all">Všetky ročníky {/* EN: All cohorts */}</option>
           {cohortOptions.map((cohort) => (
             <option key={cohort} value={cohort}>
               {cohortLabel(cohort)}
@@ -354,7 +356,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
       </div>
 
       <div className="cohort-filter-row">
-        <label htmlFor="checkpoint-select">Obdobie pre očakávané sumy:</label>
+        <label htmlFor="checkpoint-select">Obdobie pre očakávané sumy: {/* EN: Period for expected amounts */}</label>
         <select
           id="checkpoint-select"
           value={installmentCheckpoint}
@@ -363,7 +365,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
         >
           {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
             <option key={num} value={num}>
-              Splátka {num}
+              Splátka {num} {/* EN: Installment */}
             </option>
           ))}
         </select>
@@ -379,7 +381,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
           }`}
           onClick={() => setTab('overview')}
         >
-          Prehľad
+          Prehľad {/* EN: Overview */}
         </button>
         <button
           className={`statistics-tab-btn ${
@@ -399,7 +401,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
           }`}
           onClick={() => setTab('students')}
         >
-          Študenti
+          Študenti {/* EN: Students */}
         </button>
       </div>
 
@@ -409,29 +411,29 @@ export const Statistics: React.FC<StatisticsProps> = ({
           <div className="stats-grid">
             <div className="stat-card">
               <div className="statistics-card-header">
-                <h3>Počet študentov</h3>
-                <p>Aktuálne evidovaní študenti</p>
+                <h3>Počet študentov {/* EN: Number of students */}</h3>
+                <p>Aktuálne evidovaní študenti {/* EN: Currently registered students */}</p>
               </div>
               <p className="stat-value">{totalStudents}</p>
             </div>
             <div className="stat-card">
               <div className="statistics-card-header">
-                <h3>Počet platieb</h3>
-                <p>Všetky zaznamenané platby</p>
+                <h3>Počet platieb {/* EN: Number of payments */}</h3>
+                <p>Všetky zaznamenané platby {/* EN: All recorded payments */}</p>
               </div>
               <p className="stat-value">{totalPayments}</p>
             </div>
             <div className="stat-card">
               <div className="statistics-card-header">
-                <h3>Celková suma platieb</h3>
-                <p>Súčet prijatých platieb</p>
+                <h3>Celková suma platieb {/* EN: Total payment amount */}</h3>
+                <p>Súčet prijatých platieb {/* EN: Sum of received payments */}</p>
               </div>
               <p className="stat-value">{overallStats.paid.toFixed(2)} €</p>
             </div>
             <div className="stat-card">
               <div className="statistics-card-header">
-                <h3>Priemerná platba</h3>
-                <p>Priemer na jednu platbu</p>
+                <h3>Priemerná platba {/* EN: Average payment */}</h3>
+                <p>Priemer na jednu platbu {/* EN: Average per payment */}</p>
               </div>
               <p className="stat-value">
                 {totalPayments > 0 ? (overallStats.paid / totalPayments).toFixed(2) : 0} €
@@ -447,17 +449,17 @@ export const Statistics: React.FC<StatisticsProps> = ({
           {/* Table with all statistics */}
           <div className="finance-table-section">
             <div className="statistics-card-header">
-              <h3>Finančný prehľad - Celkom</h3>
-              <p>Zaplatené do obdobia vs. Očakavané do obdobia hodnoty</p>
+              <h3>Finančný prehľad - Celkom {/* EN: Financial overview - Total */}</h3>
+              <p>Zaplatené do obdobia vs. Očakavané do obdobia hodnoty {/* EN: Paid-to-date vs expected-to-date values */}</p>
             </div>
             <div className="finance-table-wrapper">
               <table className="finance-table">
                 <thead>
                   <tr>
-                    <th>Zaplatené do obdobia </th>
-                    <th>Očakavané do obdobia </th>
-                    <th>Rozdiel </th>
-                    <th>Celkovo </th>
+                    <th>Zaplatené do obdobia {/* EN: Paid to date */}</th>
+                    <th>Očakavané do obdobia {/* EN: Expected to date */}</th>
+                    <th>Rozdiel {/* EN: Difference */}</th>
+                    <th>Celkovo {/* EN: Total */}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -481,7 +483,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                 className={`region-mode-btn ${regionMode === 'all' ? 'active' : ''}`}
                 onClick={() => setRegionMode('all')}
               >
-                Všetky regióny
+                Všetky regióny {/* EN: All regions */}
               </button>
               {regions.map((region) => (
                 <button
@@ -504,7 +506,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                   <div key={region} className="region-card">
                     <div className="statistics-card-header">
                       <h4>{region}</h4>
-                      <p>Regionálne info</p>
+                      <p>Regionálne info {/* EN: Regional info */}</p>
                     </div>
                     <div className="region-stats">
                       <div className="region-stat-row">
@@ -539,7 +541,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
               onClick={loadStats}
               className="refresh-btn"
             >
-              Obnoviť štatistiky
+              Obnoviť štatistiky {/* EN: Refresh statistics */}
             </button>
           </div>
         </div>
@@ -551,7 +553,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
           <div className="finance-table-section">
             <div className="statistics-card-header">
               <h3>Period</h3>
-              <p>Počet študentov podľa typu obdobia platieb</p>
+              <p>Počet študentov podľa typu obdobia platieb {/* EN: Number of students by payment period type */}</p>
             </div>
             <div className="finance-table-wrapper">
               <table className="finance-table">
@@ -575,15 +577,15 @@ export const Statistics: React.FC<StatisticsProps> = ({
 
           <div className="finance-table-section" style={{ marginTop: 20 }}>
             <div className="statistics-card-header">
-              <h3>Suma: Classic</h3>
-              <p>Klasicky platiaci študenti. Spolu platiacich: {studentsStats.classicTotal}</p>
+              <h3>Suma: Classic {/* EN: Amount: Classic */}</h3>
+              <p>Klasicky platiaci študenti. Spolu platiacich: {studentsStats.classicTotal} {/* EN: Classic-paying students. Total paying: ... */}</p>
             </div>
             <div className="finance-table-wrapper">
               <table className="finance-table">
                 <thead>
                   <tr>
                     <th>PLNÁ SUMA</th>
-                    <th>Počet študentov</th>
+                    <th>Počet študentov {/* EN: Number of students */}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -602,15 +604,15 @@ export const Statistics: React.FC<StatisticsProps> = ({
 
           <div className="finance-table-section" style={{ marginTop: 20 }}>
             <div className="statistics-card-header">
-              <h3>Suma: Scholarship</h3>
-              <p> Študenti so štipendium. Spolu platiacich: {studentsStats.scholarshipTotal}</p>
+              <h3>Suma: Scholarship {/* EN: Amount: Scholarship */}</h3>
+              <p> Študenti so štipendium. Spolu platiacich: {studentsStats.scholarshipTotal} {/* EN: Scholarship students. Total paying: ... */}</p>
             </div>
             <div className="finance-table-wrapper">
               <table className="finance-table">
                 <thead>
                   <tr>
-                    <th>Plná suma</th>
-                    <th>Počet študentov</th>
+                    <th>Plná suma {/* EN: Full amount */}</th>
+                    <th>Počet študentov {/* EN: Number of students */}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -622,7 +624,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                   ))}
                   {studentsStats.scholarshipRows.length === 0 && (
                     <tr>
-                      <td colSpan={2}>Žiadne hodnoty</td>
+                      <td colSpan={2}>Žiadne hodnoty {/* EN: No values */}</td>
                     </tr>
                   )}
                 </tbody>
@@ -636,7 +638,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                 className={`region-mode-btn ${regionMode === 'all' ? 'active' : ''}`}
                 onClick={() => setRegionMode('all')}
               >
-                Všetky regióny
+                Všetky regióny {/* EN: All regions */}
               </button>
               {regions.map((region) => (
                 <button
@@ -658,7 +660,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                   <div key={`students-${region}`} className="region-card">
                     <div className="statistics-card-header">
                       <h4>{region}</h4>
-                      <p>Regionálne info</p>
+                      <p>Regionálne info {/* EN: Regional info */}</p>
                     </div>
                     <div className="region-stats">
                       <div className="region-stat-row">
@@ -677,7 +679,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                       <div className="region-group-divider" />
 
                       <div className="region-stat-row">
-                        <span className="stat-label">Classic spolu:</span>
+                        <span className="stat-label">Classic spolu: {/* EN: Classic total */}</span>
                         <span className="stat-number">{regionStudentStats.classicTotal}</span>
                       </div>
                       <div className="region-stat-row">
@@ -692,7 +694,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                       <div className="region-group-divider" />
 
                       <div className="region-stat-row">
-                        <span className="stat-label">Scholarship spolu:</span>
+                        <span className="stat-label">Scholarship spolu: {/* EN: Scholarship total */}</span>
                         <span className="stat-number">{regionStudentStats.scholarshipTotal}</span>
                       </div>
                       {regionStudentStats.scholarshipRows.map(([fullAmount, count]) => (
@@ -713,7 +715,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
               onClick={loadStats}
               className="refresh-btn"
             >
-              Obnoviť štatistiky
+              Obnoviť štatistiky {/* EN: Refresh statistics */}
             </button>
           </div>
         </div>

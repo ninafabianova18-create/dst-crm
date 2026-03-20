@@ -81,6 +81,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       );
       const snap = await getDocs(paymentsQ);
       const list: PaymentInfo[] = [];
+      // EN: Loaded payments count
       console.log("Načítané platby:", snap.size);
       snap.forEach((d) => {
         const data = d.data() as any;
@@ -126,6 +127,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
 
       setPayments(cohortPayments);
     } catch (err) {
+      // EN: Error while loading payments
       console.error("Chyba pri načítaní platieb:", err);
       setMessage("Chyba pri načítaní platieb");
       setMessageType("error");
@@ -145,6 +147,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       setMessageType("success");
       loadPayments();
     } catch (err) {
+      // EN: Error while removing assignment
       console.error("Chyba pri odstraňovaní priradenia:", err);
       setMessage("Chyba pri odstraňovaní priradenia");
       setMessageType("error");
@@ -152,6 +155,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
   };
 
   const deletePayment = async (paymentId: string) => {
+    // EN: Are you sure you want to delete this payment?
     if (!confirm("Naozaj chcete vymazať túto platbu?")) return;
     try {
       await deleteDoc(doc(db, "payments", paymentId));
@@ -159,6 +163,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       setMessageType("success");
       loadPayments();
     } catch (err) {
+      // EN: Error while deleting payment
       console.error("Chyba pri mazaní platby:", err);
       setMessage("Chyba pri mazaní platby");
       setMessageType("error");
@@ -186,6 +191,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       });
       setStudentResults(res);
     } catch (err) {
+      // EN: Error while searching students
       console.error("Chyba pri hľadaní študentov:", err);
       setMessage("Chyba pri hľadaní študentov");
       setMessageType("error");
@@ -205,7 +211,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
         matchStatus: "matched",
       });
       
-      console.log("Platba úspešne priradená!");
+      console.log("Platba úspešne priradená!"); // EN: Payment assigned successfully!
       
       setMessage("Platba priradená ku študentovi.");
       setMessageType("success");
@@ -214,6 +220,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       setSearchVS("");
       loadPayments();
     } catch (err) {
+      // EN: Error while assigning payment
       console.error("Chyba pri priraďovaní platby:", err);
       setMessage("Chyba pri priraďovaní platby");
       setMessageType("error");
@@ -309,6 +316,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       setMessageType("success");
       await loadPayments();
     } catch (err) {
+      // EN: Error during VS auto-matching
       console.error("Chyba pri auto-spárovaní podľa VS:", err);
       setMessage("Chyba pri auto-spárovaní podľa VS");
       setMessageType("error");
@@ -326,6 +334,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
   const cohortTitle = selectedCohort === "all" ? "Všetky ročníky" : `Ročník ${selectedCohort}`;
 
   if (loading) {
+    // EN: Loading payments...
     return (
       <div className="payments-management-container">Načítavam platby...</div>
     );
@@ -334,11 +343,11 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
   return (
     <div className="payments-management-container">
       <div className="payments-management-header">
-        <h2>Správa platieb</h2>
+        <h2>Správa platieb {/* EN: Payments management */}</h2>
         <p>
-          Prehľad importovaných platieb, priraďovanie k študentom a ich správa
+          Prehľad importovaných platieb, priraďovanie k študentom a ich správa {/* EN: Overview of imported payments, matching to students, and management */}
         </p>
-        <p style={{ marginTop: 8 }}>Aktívny filter ročníka: <b>{cohortTitle}</b></p>
+        <p style={{ marginTop: 8 }}>Aktívny filter ročníka: <b>{cohortTitle}</b> {/* EN: Active cohort filter */}</p>
       </div>
 
       {message && (
@@ -348,20 +357,21 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
       <div className="payments-card">
         {payments.length === 0 ? (
           <p className="empty-message">
-            Žiadne platby pre filter:{" "}
+            Žiadne platby pre filter:{" "} {/* EN: No payments for filter */}
             {statusFilter === "all"
-              ? "Všetky"
+              ? "Všetky" // EN: All
               : statusFilter === "matched"
-              ? "Priradené"
+              ? "Priradené" // EN: Matched
               : statusFilter === "ambiguous"
-              ? "Nejednoznačné"
-              : "Nepriradené"}
+              ? "Nejednoznačné" // EN: Ambiguous
+              : "Nepriradené" // EN: Unmatched
+            }
           </p>
         ) : (
           <>
             <div className="filters-bar">
               <div className="filters-left">
-                <span className="filters-label">Filter:</span>
+                <span className="filters-label">Filter: {/* EN: Filter */}</span>
 
                 <button
                   className={`filter-chip ${
@@ -369,7 +379,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                   }`}
                   onClick={() => setStatusFilter("all")}
                 >
-                  Všetky ({payments.length})
+                  Všetky ({payments.length}) {/* EN: All */}
                 </button>
 
                 <button
@@ -378,7 +388,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                   }`}
                   onClick={() => setStatusFilter("unmatched")}
                 >
-                  Nepriradené (
+                  Nepriradené ( {/* EN: Unmatched */}
                   {
                     payments.filter(
                       (p) => (p.matchStatus ?? "unmatched") === "unmatched"
@@ -393,7 +403,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                   }`}
                   onClick={() => setStatusFilter("matched")}
                 >
-                  Priradené (
+                  Priradené ( {/* EN: Matched */}
                   {payments.filter((p) => p.matchStatus === "matched").length})
                 </button>
 
@@ -403,7 +413,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                   }`}
                   onClick={() => setStatusFilter("ambiguous")}
                 >
-                  Nejednoznačné (
+                  Nejednoznačné ( {/* EN: Ambiguous */}
                   {payments.filter((p) => p.matchStatus === "ambiguous").length}
                   )
                 </button>
@@ -415,10 +425,10 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                   onClick={autoAssignByVS}
                   disabled={autoPairing}
                 >
-                  {autoPairing ? "Párujem podľa VS..." : "Auto-spárovať podľa VS"}
+                  {autoPairing ? "Párujem podľa VS..." /* EN: Matching by VS... */ : "Auto-spárovať podľa VS" /* EN: Auto-match by VS */}
                 </button>
                 <span className="filters-count">
-                  Zobrazené: <b>{filteredPayments.length}</b>
+                  Zobrazené: <b>{filteredPayments.length}</b> {/* EN: Displayed */}
                 </span>
               </div>
             </div>
@@ -428,12 +438,12 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                   <tr>
                     <th>VS</th>
                     <th>Sum</th>
-                    <th>Dátum</th>
-                    <th>Odosielateľ</th>
-                    <th>Správa</th>
-                    <th>Stav</th>
-                    <th>Priradené k</th>
-                    <th>Akcia</th>
+                    <th>Dátum {/* EN: Date */}</th>
+                    <th>Odosielateľ {/* EN: Sender */}</th>
+                    <th>Správa {/* EN: Message */}</th>
+                    <th>Stav {/* EN: Status */}</th>
+                    <th>Priradené k {/* EN: Assigned to */}</th>
+                    <th>Akcia {/* EN: Action */}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -460,10 +470,11 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                             }`}
                           >
                             {p.matchStatus === "matched"
-                              ? "Priradené"
+                              ? "Priradené" // EN: Matched
                               : p.matchStatus === "ambiguous"
-                              ? "Nejednoznačné"
-                              : "Nepriradené"}
+                              ? "Nejednoznačné" // EN: Ambiguous
+                              : "Nepriradené" // EN: Unmatched
+                            }
                           </span>
                         </td>
                         <td>{p.matchedStudentId ?? "-"}</td>
@@ -475,14 +486,14 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                               searchStudentsByVS(p.vs ?? "");
                             }}
                           >
-                            Priradiť
+                            Priradiť {/* EN: Assign */}
                           </button>
 
                           {p.matchStatus === "matched" && p.matchedStudentId && (
                             <button
                               onClick={() => removeAssignment(p.id!)}
                             >
-                              Vyčistiť
+                              Vyčistiť {/* EN: Clear */}
                             </button>
                           )}
 
@@ -490,7 +501,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                             onClick={() => deletePayment(p.id!)}
                             className="danger"
                           >
-                            Vymazať
+                            Vymazať {/* EN: Delete */}
                           </button>
                         </td>
                       </tr>
@@ -500,9 +511,10 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                         <tr className="assign-payment-row">
                           <td colSpan={8}>
                             <div className="assign-panel">
-                              <h3>Priradiť platbu</h3>
+                              <h3>Priradiť platbu {/* EN: Assign payment */}</h3>
                               <div className="assign-row">
-                                <label>Hľadaj študenta podľa VS:</label>
+                                <label>Hľadaj študenta podľa VS: {/* EN: Search student by VS */}</label>
+                                {/* EN: Enter VS... */}
                                 <input
                                   type="text"
                                   placeholder="Zadaj VS..."
@@ -515,7 +527,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                                 <button
                                   onClick={() => setSelectedPaymentId(null)}
                                 >
-                                  Zatvoriť
+                                  Zatvoriť {/* EN: Close */}
                                 </button>
                               </div>
 
@@ -524,10 +536,10 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                                   <table className="search-table">
                                     <thead>
                                       <tr>
-                                        <th>Meno</th>
+                                        <th>Meno {/* EN: Name */}</th>
                                         <th>VS</th>
-                                        <th>Škola</th>
-                                        <th>Akcia</th>
+                                        <th>Škola {/* EN: School */}</th>
+                                        <th>Akcia {/* EN: Action */}</th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -543,7 +555,7 @@ export const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ selected
                                               }
                                               disabled={assigning}
                                             >
-                                              Priradiť k tomuto študentovi
+                                              Priradiť k tomuto študentovi {/* EN: Assign to this student */}
                                             </button>
                                           </td>
                                         </tr>
