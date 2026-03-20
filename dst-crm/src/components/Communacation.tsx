@@ -344,6 +344,9 @@ export const Communication: React.FC<CommunicationProps> = ({
         if (htmlReplyHint) {
           // EN: API endpoint returned HTML instead of JSON; check server/routing
           setMessage("Chyba pri odoslaní: API endpoint /api/send-mail vrátil HTML namiesto JSON. Skontrolujte, či beží email server a routing /api.");
+        } else if (backendError === "usage_exceeded") {
+          // EN: Netlify usage quota exceeded for serverless functions
+          setMessage("Chyba pri odoslaní: Bol prekročený limit používania Netlify Functions (usage_exceeded). Skontrolujte Usage v Netlify a počkajte na reset alebo navýšte plán.");
         } else {
           // EN: Sending failed with backend error or HTTP status
           setMessage(`Chyba pri odoslaní: ${backendError || `HTTP ${response.status}`}`);
