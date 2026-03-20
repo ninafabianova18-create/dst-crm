@@ -537,7 +537,8 @@ export const StudentsManagement: React.FC<StudentsManagementProps> = ({ onRemind
             disabled={selectedCohort === "all" || deletingCohort || students.length === 0}
             title={selectedCohort === "all" ? "Najprv vyberte konkrétny ročník v Dashboardi" : "Vymazať celý aktuálne zvolený ročník"}
           >
-            {deletingCohort ? "Mažem ročník..." /* EN: Deleting cohort... */ : "Vymazať ročník" /* EN: Delete cohort */}
+            {deletingCohort ? "Mažem ročník..." /* EN: Deleting cohort... */ : "Vymazať ročníček" /* EN: Delete cohort */}
+
           </button>
         </div>
 
