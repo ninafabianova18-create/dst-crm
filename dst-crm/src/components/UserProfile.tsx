@@ -212,7 +212,19 @@ export const UserProfile = () => {
         payload.noteUpdatedBy = user?.email ?? "";
       }
 
-      await updateDoc(doc(db, "students", studentDocId), payload);
+      try {
+        await updateDoc(doc(db, "students", studentDocId), payload);
+      } catch (saveError: any) {
+        const metadataOnlyDenied =
+          saveError?.code === "permission-denied" && noteChanged;
+
+        if (!metadataOnlyDenied) {
+          throw saveError;
+        }
+
+        // Fallback for stricter rules: save editable fields without note review metadata.
+        await updateDoc(doc(db, "students", studentDocId), changedFields);
+      }
       setStudentData((prev) => {
         if (!prev) return prev;
         const next: StudentData = { ...prev };
